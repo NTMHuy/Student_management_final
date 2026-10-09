@@ -32,6 +32,8 @@ Do not commit real secrets or `.env.local`. In production, use HTTPS, set `COOKI
 - Cookie-based login, current-session restoration (`GET /api/auth/me`), and logout.
 - Student list/search/filter, details, create, update, and delete through `/api/students`.
 - Teacher list/search/filter, details, create, update, and delete through `/api/teachers`.
+- Subject list/search/filter, create, update, and delete through `/api/subjects`.
+- Dashboard headline counts (students, teachers, classes, departments, classes by grade) load from `/api/dashboard/summary`.
 - Frontend requests send credentials so the browser includes the backend's HttpOnly session cookie.
 - Backend CORS permits credentials only from the configured frontend origin.
 
@@ -39,5 +41,5 @@ Do not commit real secrets or `.env.local`. In production, use HTTPS, set `COOKI
 
 - The role selector on the login screen is a UI affordance; the server is authoritative for the account role. Client-side role switching does not grant permissions.
 - Grades and attendance currently have frontend endpoint constants, but the backend controllers were not found during this phase. Those screens must not be considered API-integrated yet.
-- Classes, subjects, and dashboard still need their mock services/components replaced with backend data in the next phase.
+- Class management is still using mock data. Dashboard sections beyond the headline counts (attendance, academic distribution, sample class table, notices/reminders) are still static and must not be interpreted as live data.
 - Cross-origin production deployment needs cookie/CORS review. The current backend cookie uses SameSite=Lax; if frontend and API are on different sites, cookie policy and CSRF protection must be designed together rather than simply changing CORS.
