@@ -1,6 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';import { Breadcrumb } from '@/components/layout/Breadcrumb';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Breadcrumb } from '@/components/layout/Breadcrumb';
+import { apiRequest } from '@/lib/api/client';
+import { API_ENDPOINTS } from '@/lib/api/endpoints';
 import Link from 'next/link';
 import {
   School,
@@ -17,16 +20,43 @@ import {
   BookOpen,
 } from 'lucide-react';
 
+interface DashboardSummary {
+  totalStudents: number;
+  totalTeachers: number | null;
+  totalDepartments: number | null;
+  totalClasses: number;
+  classesByGrade: { grade10: number; grade11: number; grade12: number };
+  studentsByStatus: { active: number; suspended: number; transferred: number };
+  classes: Array<{ id: string; name: string; gradeLevel: number; homeroomTeacher: string; currentStudents: number; maxStudents: number }>;
+  recentStudents: Array<{ id: string; studentCode: string; fullName: string; className: string; avatarInitials: string; createdAt: string }>;
+}
+
 export default function DashboardPage() {
   const [selectedSchoolYear, setSelectedSchoolYear] = useState('2023 - 2024 (Học kỳ II)');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [reminderSent, setReminderSent] = useState(false);
+  const [summary, setSummary] = useState<DashboardSummary | null>(null);
+  const [summaryError, setSummaryError] = useState('');
+
+  const loadSummary = useCallback(async () => {
+    setIsRefreshing(true);
+    setSummaryError('');
+    try {
+      const data = await apiRequest<DashboardSummary>(API_ENDPOINTS.dashboard);
+      setSummary(data);
+    } catch (error) {
+      setSummaryError(error instanceof Error ? error.message : 'Không thể tải số liệu tổng quan.');
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadSummary();
+  }, [loadSummary]);
 
   const handleRefresh = () => {
-    setIsRefreshing(true);
-    setTimeout(() => {
-      setIsRefreshing(false);
-    }, 600);
+    void loadSummary();
   };
 
   const handleSendReminder = () => {
@@ -47,7 +77,7 @@ export default function DashboardPage() {
               Tổng quan hệ thống
             </h1>
             <p className="text-xs text-on-surface-variant">
-              Dữ liệu đồng bộ trực tiếp • Thứ Sáu, ngày 17 tháng 05 năm 2024
+              {summaryError ? <span className="text-error">{summaryError}</span> : 'Số liệu được tải từ máy chủ khi có phiên đăng nhập hợp lệ.'}
             </p>
           </div>
 
@@ -102,7 +132,7 @@ export default function DashboardPage() {
                   Tổng học sinh
                 </span>
                 <div className="text-3xl font-bold text-on-surface tracking-tight mt-1 font-mono">
-                  1,420
+                  {summary ? summary.totalStudents.toLocaleString('vi-VN') : '—'}
                 </div>
               </div>
               <div className="w-11 h-11 rounded-xl bg-surface-container-high flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors">
@@ -126,7 +156,7 @@ export default function DashboardPage() {
                   Tổng giáo viên
                 </span>
                 <div className="text-3xl font-bold text-on-surface tracking-tight mt-1 font-mono">
-                  86
+                  {summary?.totalTeachers == null ? '—' : summary.totalTeachers.toLocaleString('vi-VN')}
                 </div>
               </div>
               <div className="w-11 h-11 rounded-xl bg-surface-container-high flex items-center justify-center text-secondary group-hover:bg-secondary group-hover:text-on-secondary transition-colors">
@@ -135,7 +165,7 @@ export default function DashboardPage() {
             </div>
             <div className="flex items-center gap-1.5 mt-4 pt-2 border-t border-outline-variant/10 text-xs text-on-surface-variant font-medium">
               <span className="w-2 h-2 rounded-full bg-secondary" />
-              <span>Đầy đủ 8 tổ bộ môn</span>
+              <span>{summary?.totalDepartments == null ? '—' : summary.totalDepartments} tổ bộ môn</span>
             </div>
           </div>
 
@@ -147,7 +177,7 @@ export default function DashboardPage() {
                   Tổng lớp học
                 </span>
                 <div className="text-3xl font-bold text-on-surface tracking-tight mt-1 font-mono">
-                  38
+                  {summary ? summary.totalClasses.toLocaleString('vi-VN') : '—'}
                 </div>
               </div>
               <div className="w-11 h-11 rounded-xl bg-surface-container-high flex items-center justify-center text-tertiary-container group-hover:bg-tertiary-container group-hover:text-on-tertiary transition-colors">
@@ -155,9 +185,9 @@ export default function DashboardPage() {
               </div>
             </div>
             <div className="flex items-center gap-2 mt-4 pt-2 border-t border-outline-variant/10 text-xs font-mono text-on-surface-variant">
-              <span className="bg-surface-container-low px-2 py-0.5 rounded">K10: 14</span>
-              <span className="bg-surface-container-low px-2 py-0.5 rounded">K11: 12</span>
-              <span className="bg-surface-container-low px-2 py-0.5 rounded">K12: 12</span>
+              <span className="bg-surface-container-low px-2 py-0.5 rounded">K10: {summary?.classesByGrade.grade10 ?? '—'}</span>
+              <span className="bg-surface-container-low px-2 py-0.5 rounded">K11: {summary?.classesByGrade.grade11 ?? '—'}</span>
+              <span className="bg-surface-container-low px-2 py-0.5 rounded">K12: {summary?.classesByGrade.grade12 ?? '—'}</span>
             </div>
           </div>
 
