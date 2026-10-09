@@ -1,5 +1,9 @@
 'use client';
-import React, { createContext, useContext, useState } from 'react';export type UserRole = 'admin' | 'teacher';
+
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { authService, AuthUser } from '@/modules/auth/services/auth.service';
+
+export type UserRole = 'admin' | 'teacher';
 
 export interface User {
   id: string;
@@ -14,69 +18,79 @@ interface AuthContextType {
   user: User | null;
   role: UserRole;
   isAuthenticated: boolean;
-  login: (email: string, role: UserRole) => Promise<boolean>;
-  logout: () => void;
+  isLoading: boolean;
+  login: (email: string, password: string) => Promise<boolean>;
+  logout: () => Promise<void>;
   switchRole: (role: UserRole) => void;
 }
 
-const defaultAdminUser: User = {
-  id: 'admin-01',
-  name: 'Nguyễn Văn An',
-  email: 'admin@edumanage.edu.vn',
-  role: 'admin',
-  avatarText: 'NA',
-  title: 'Quản trị viên',
-};
-
-const defaultTeacherUser: User = {
-  id: 'teacher-01',
-  name: 'Nguyễn Văn An',
-  email: 'gv.nguyenvana@edumanage.edu.vn',
-  role: 'teacher',
-  avatarText: 'NA',
-  title: 'Quản trị viên / Giáo viên',
-};
-
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+function toUser(account: AuthUser): User {
+  return {
+    id: account.id,
+    name: account.name,
+    email: account.email,
+    role: account.role,
+    avatarText: account.avatarText,
+    title: account.title,
+  };
+}
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(defaultAdminUser);
-  const [role, setRole] = useState<UserRole>('admin');
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const login = async (email: string, targetRole: UserRole): Promise<boolean> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const loggedUser = targetRole === 'admin' ? defaultAdminUser : defaultTeacherUser;
-        setUser({ ...loggedUser, email: email || loggedUser.email });
-        setRole(targetRole);
-        resolve(true);
-      }, 600);
+  useEffect(() => {
+    let active = true;
+    authService.me()
+      .then((account) => {
+        if (active) setUser(toUser(account));
+      })
+      .catch(() => {
+        if (active) setUser(null);
+      })
+      .finally(() => {
+        if (active) setIsLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const login = useCallback(async (email: string, password: string): Promise<boolean> => {
+    const account = await authService.login({
+      username: email,
+      password,
+      role: 'admin', // Role is determined by the authenticated account on the server.
     });
-  };
+    setUser(toUser(account));
+    return true;
+  }, []);
 
-  const logout = () => {
-    setUser(null);
-  };
+  const logout = useCallback(async () => {
+    try {
+      await authService.logout();
+    } finally {
+      setUser(null);
+    }
+  }, []);
 
-  const switchRole = (newRole: UserRole) => {
-    setRole(newRole);
-    setUser(newRole === 'admin' ? defaultAdminUser : defaultTeacherUser);
-  };
+  // A client-side role switch must never grant a different server-side role.
+  const switchRole = useCallback((_role: UserRole) => undefined, []);
 
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        role,
-        isAuthenticated: !!user,
-        login,
-        logout,
-        switchRole,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
+  const role = user?.role ?? 'admin';
+  const value = useMemo(() => ({
+    user,
+    role,
+    isAuthenticated: user !== null,
+    isLoading,
+    login,
+    logout,
+    switchRole,
+  }), [user, role, isLoading, login, logout, switchRole]);
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => {
