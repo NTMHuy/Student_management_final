@@ -1,6 +1,6 @@
 import { apiRequest } from "@/lib/api/client";
 import { API_ENDPOINTS } from "@/lib/api/endpoints";
-import { LoginCredentials, AuthSession } from "../types";
+import { LoginCredentials } from "../types";
 
 export interface AuthUser {
   id: string;
