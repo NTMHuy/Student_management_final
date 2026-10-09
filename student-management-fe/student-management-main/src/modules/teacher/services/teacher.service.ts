@@ -47,7 +47,7 @@ export const teacherService = {
     const currentWithForm = current as TeacherApiResponse;
     const updated: TeacherFormData & { status: string } = {
       fullName: data.fullName ?? current.fullName,
-      gender: data.gender ?? currentWithForm.gender ?? "other" as "male" | "female",
+      gender: data.gender ?? currentWithForm.gender ?? "male",
       dateOfBirth: data.dateOfBirth ?? currentWithForm.dateOfBirth ?? "",
       phone: data.phone ?? current.phone,
       email: data.email ?? current.email,
