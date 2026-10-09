@@ -33,12 +33,17 @@ export async function apiRequest<T>(
   if (body !== undefined && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
+  if (!headers.has("Accept")) {
+    headers.set("Accept", "application/json");
+  }
 
   const endpoint = path.replace(/^\/+/, "");
   const response = await fetch(`${API_BASE_URL}/${endpoint}`, {
     ...options,
     headers,
     body,
+    // Backend stores the JWT in an HttpOnly cookie, not in localStorage.
+    credentials: options.credentials ?? "include",
   });
 
   if (!response.ok) {
@@ -50,6 +55,10 @@ export async function apiRequest<T>(
   }
 
   if (response.status === 204) {
+    return undefined as T;
+  }
+
+  if (response.status === 205 || response.headers.get("content-length") === "0") {
     return undefined as T;
   }
 
