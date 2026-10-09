@@ -19,7 +19,7 @@ interface AuthContextType {
   role: UserRole;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (email: string, password: string, expectedRole: UserRole) => Promise<boolean>;
   logout: () => Promise<void>;
   switchRole: (role: UserRole) => void;
 }
@@ -58,12 +58,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
-  const login = useCallback(async (email: string, password: string): Promise<boolean> => {
+  const login = useCallback(async (email: string, password: string, expectedRole: UserRole): Promise<boolean> => {
     const account = await authService.login({
       username: email,
       password,
-      role: 'admin', // Role is determined by the authenticated account on the server.
+      role: expectedRole,
     });
+    if (account.role !== expectedRole) {
+      await authService.logout();
+      throw new Error('Loại tài khoản không khớp với vai trò đã chọn. Vui lòng chọn đúng loại tài khoản.');
+    }
     setUser(toUser(account));
     return true;
   }, []);
