@@ -15,6 +15,7 @@ export const GradeDistributionCard: React.FC<GradeDistributionCardProps> = ({ re
     (r) => r.avgScore !== null && r.avgScore >= 6.5 && r.avgScore < 8.0
   ).length;
   const from8to10 = records.filter((r) => r.avgScore !== null && r.avgScore >= 8.0).length;
+  const scored = under5 + from5to65 + from65to8 + from8to10;
 
   return (
     <div className="p-6 bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant/20 flex flex-col justify-between gap-4">
@@ -29,7 +30,7 @@ export const GradeDistributionCard: React.FC<GradeDistributionCardProps> = ({ re
           <span className="font-mono text-xs font-semibold text-on-surface">{under5}</span>
           <div
             className="w-full bg-error-container rounded-t transition-all"
-            style={{ height: `${Math.max(15, (under5 / (records.length || 1)) * 100)}%` }}
+            style={{ height: `${Math.max(15, (under5 / (scored || 1)) * 100)}%` }}
           />
           <span className="text-[10px] text-outline font-mono">&lt;5.0</span>
         </div>
@@ -39,7 +40,7 @@ export const GradeDistributionCard: React.FC<GradeDistributionCardProps> = ({ re
           <span className="font-mono text-xs font-semibold text-on-surface">{from5to65}</span>
           <div
             className="w-full bg-surface-container-highest rounded-t transition-all"
-            style={{ height: `${Math.max(20, (from5to65 / (records.length || 1)) * 100)}%` }}
+            style={{ height: `${Math.max(20, (from5to65 / (scored || 1)) * 100)}%` }}
           />
           <span className="text-[10px] text-outline font-mono">5-6.5</span>
         </div>
@@ -49,7 +50,7 @@ export const GradeDistributionCard: React.FC<GradeDistributionCardProps> = ({ re
           <span className="font-mono text-xs font-semibold text-on-surface">{from65to8}</span>
           <div
             className="w-full bg-primary-fixed rounded-t transition-all"
-            style={{ height: `${Math.max(35, (from65to8 / (records.length || 1)) * 100)}%` }}
+            style={{ height: `${Math.max(35, (from65to8 / (scored || 1)) * 100)}%` }}
           />
           <span className="text-[10px] text-outline font-mono">6.5-8</span>
         </div>
@@ -59,14 +60,16 @@ export const GradeDistributionCard: React.FC<GradeDistributionCardProps> = ({ re
           <span className="font-mono text-xs font-semibold text-on-surface">{from8to10}</span>
           <div
             className="w-full bg-secondary-container rounded-t transition-all"
-            style={{ height: `${Math.max(45, (from8to10 / (records.length || 1)) * 100)}%` }}
+            style={{ height: `${Math.max(45, (from8to10 / (scored || 1)) * 100)}%` }}
           />
           <span className="text-[10px] text-outline font-mono">8-10</span>
         </div>
       </div>
 
       <p className="text-xs text-on-surface-variant">
-        Phần lớn học sinh đạt từ mức Khá trở lên ({Math.round(((from65to8 + from8to10) / (records.length || 1)) * 100)}%).
+        {scored === 0
+          ? 'Chưa có học sinh nào đủ điểm để thống kê.'
+          : `${Math.round(((from65to8 + from8to10) / scored) * 100)}% học sinh đã có ĐTB đạt từ mức Khá trở lên (${scored}/${records.length} học sinh đủ điểm).`}
       </p>
     </div>
   );

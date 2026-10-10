@@ -1,29 +1,29 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useGrades } from '@/modules/grade/hooks/useGrades';
 import { GradeFilters } from '@/modules/grade/components/GradeFilters';
 import { GradeTable } from '@/modules/grade/components/GradeTable';
 import { GradeDistributionCard } from '@/modules/grade/components/GradeDistributionCard';
 import { ValedictorianCard } from '@/modules/grade/components/ValedictorianCard';
+import { GRADE_COLUMNS, parseSemester } from '@/modules/grade/utils';
+import { GradeFiltersState } from '@/modules/grade/types';
 import { Pagination } from '@/components/ui/Pagination';
-import {
-  Download,
-  Lock,
-  RotateCcw,
-  Sparkles,
-  Save,
-  CheckCircle,
-  X,
-  FileSpreadsheet,
-} from 'lucide-react';
+import { Download, RotateCcw, Save, CheckCircle, AlertCircle, X } from 'lucide-react';
+
+type Toast = { kind: 'success' | 'error'; message: string };
 
 export default function GradesPage() {
   const {
+    classOptions,
+    subjectOptions,
+    optionsLoading,
+    optionsError,
     records,
     isLoading,
-    isLocked,
-    setIsLocked,
+    isSaving,
+    isDirty,
+    error,
     filters,
     setFilters,
     handleCellChange,
@@ -35,160 +35,198 @@ export default function GradesPage() {
   } = useGrades();
 
   const [currentPage, setCurrentPage] = useState(1);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
-
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3500);
-  };
-
-  const handleSaveAll = async () => {
-    await saveGrades();
-    showToast('Tất cả điểm số đã được tự động lưu và tính lại điểm TB.');
-  };
-
-  const handleLockGrades = () => {
-    setIsLocked(!isLocked);
-    showToast(
-      isLocked
-        ? 'Đã mở khóa sổ điểm, giáo viên có thể chỉnh sửa.'
-        : 'Đã khóa sổ điểm. Dữ liệu đã được chốt và bảo mật.'
-    );
-  };
-
-  const handleCalculateAll = () => {
-    refresh();
-    showToast('Đã tính toán lại toàn bộ điểm trung bình và xếp loại học lực.');
-  };
-
-  const handleExport = () => {
-    showToast('Đang kết xuất bảng điểm lớp ' + filters.className + ' ra file Excel (.xlsx)...');
-  };
+  const [toast, setToast] = useState<Toast | null>(null);
 
   const pageSize = 10;
-  const totalPages = Math.ceil((records.length || totalStudents || 10) / pageSize);
+  const totalPages = Math.max(1, Math.ceil(records.length / pageSize));
+  const pageRecords = records.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(totalPages);
+  }, [currentPage, totalPages]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filters.classId, filters.subjectId, filters.semester]);
+
+  // Cảnh báo khi đóng/tải lại trang lúc còn điểm chưa lưu.
+  useEffect(() => {
+    if (!isDirty) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [isDirty]);
+
+  const showToast = (t: Toast) => {
+    setToast(t);
+    setTimeout(() => setToast(null), 4000);
+  };
+
+  const handleFilterChange = (patch: Partial<GradeFiltersState>) => {
+    if (isDirty && !window.confirm('Bạn có điểm chưa lưu. Đổi bộ lọc sẽ làm mất các thay đổi này. Tiếp tục?')) {
+      return;
+    }
+    setFilters((prev) => ({ ...prev, ...patch }));
+  };
+
+  const handleSave = async () => {
+    try {
+      await saveGrades();
+      showToast({ kind: 'success', message: 'Đã lưu bảng điểm.' });
+    } catch (e) {
+      showToast({ kind: 'error', message: e instanceof Error ? e.message : 'Không thể lưu bảng điểm.' });
+    }
+  };
+
+  const handleReload = () => {
+    if (isDirty && !window.confirm('Tải lại sẽ bỏ các thay đổi chưa lưu. Tiếp tục?')) return;
+    refresh();
+  };
+
+  const selectedClass = classOptions.find((c) => String(c.id) === filters.classId);
+  const selectedSubject = subjectOptions.find((s) => String(s.id) === filters.subjectId);
+  const { schoolYear, semester } = parseSemester(filters.semester);
+
+  const handleExport = () => {
+    const header = ['STT', 'Mã HS', 'Họ và tên', ...GRADE_COLUMNS.map((c) => c.label), 'ĐTB', 'Xếp loại'];
+    const rows = records.map((r, i) => [
+      i + 1,
+      r.studentCode,
+      r.fullName,
+      ...GRADE_COLUMNS.map((c) => r[c.field] ?? ''),
+      r.avgScore ?? '',
+      r.rank ?? '',
+    ]);
+    const csv = [header, ...rows]
+      .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+      .join('\r\n');
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `bang-diem-${selectedClass?.name ?? 'lop'}-${selectedSubject?.code ?? 'mon'}-${schoolYear}-HK${semester}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const noAssignment = !optionsLoading && !optionsError && classOptions.length === 0;
+  const canEdit = !!filters.classId && !!filters.subjectId;
 
   return (
-    
-      <div className="flex flex-col gap-6 relative">
-        {/* Toast */}
-        {toastMessage && (
-          <div className="fixed top-20 right-6 z-50 flex items-center gap-3 px-5 py-3.5 bg-surface-container-lowest text-on-surface rounded-2xl shadow-xl border border-outline-variant/30 animate-in fade-in slide-in-from-top-2 duration-300">
-            <div className="w-8 h-8 rounded-full bg-secondary-container/20 text-secondary-container flex items-center justify-center shrink-0">
-              <CheckCircle className="w-5 h-5" />
-            </div>
-            <div className="flex flex-col pr-4">
-              <span className="font-semibold text-xs sm:text-sm text-on-surface">
-                Sổ điểm điện tử
-              </span>
-              <span className="text-xs text-on-surface-variant">{toastMessage}</span>
-            </div>
-            <button
-              onClick={() => setToastMessage(null)}
-              className="p-1 text-outline hover:text-on-surface transition-colors cursor-pointer"
-            >
-              <X className="w-4 h-4" />
-            </button>
+    <div className="flex flex-col gap-6 relative">
+      {toast && (
+        <div role="status" className="fixed top-20 right-6 z-50 flex items-center gap-3 px-5 py-3.5 bg-surface-container-lowest text-on-surface rounded-2xl shadow-xl border border-outline-variant/30">
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${toast.kind === 'success' ? 'bg-secondary-container/20 text-secondary-container' : 'bg-error-container text-error'}`}>
+            {toast.kind === 'success' ? <CheckCircle className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
           </div>
-        )}
+          <div className="flex flex-col pr-4">
+            <span className="font-semibold text-xs sm:text-sm text-on-surface">Sổ điểm điện tử</span>
+            <span className="text-xs text-on-surface-variant">{toast.message}</span>
+          </div>
+          <button onClick={() => setToast(null)} className="p-1 text-outline hover:text-on-surface transition-colors cursor-pointer" aria-label="Đóng">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
-        {/* Header Section */}
-        <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-4">
-          <div className="flex flex-col gap-1">
-            <div className="flex items-center gap-2 text-xs text-on-surface-variant font-medium">
-              <span className="font-mono text-secondary uppercase font-semibold">
-                SỔ ĐIỂM ĐIỆN TỬ
-              </span>
-              <span className="w-1 h-1 rounded-full bg-outline" />
-              <span>Học kỳ II (2024-2025)</span>
-            </div>
-            <div className="flex items-baseline gap-3 flex-wrap">
-              <h1 className="text-2xl sm:text-3xl font-bold text-primary tracking-tight">
-                Quản lý &amp; Nhập Điểm
-              </h1>
+      <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-4">
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-2 text-xs text-on-surface-variant font-medium">
+            <span className="font-mono text-secondary uppercase font-semibold">SỔ ĐIỂM ĐIỆN TỬ</span>
+            <span className="w-1 h-1 rounded-full bg-outline" />
+            <span>Học kỳ {semester === 1 ? 'I' : 'II'} ({schoolYear})</span>
+          </div>
+          <div className="flex items-baseline gap-3 flex-wrap">
+            <h1 className="text-2xl sm:text-3xl font-bold text-primary tracking-tight">Quản lý &amp; Nhập Điểm</h1>
+            {selectedClass && selectedSubject && (
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-surface-container-high text-primary font-semibold text-xs">
-                Lớp {filters.className} • Môn {filters.subject.toUpperCase()}
+                Lớp {selectedClass.name} • Môn {selectedSubject.name}
               </span>
-            </div>
-            <p className="text-xs sm:text-sm text-on-surface-variant max-w-2xl leading-relaxed">
-              Nhập điểm kiểm tra thường xuyên, điểm giữa kỳ, cuối kỳ với công thức tính điểm tự động chuẩn Bộ Giáo Dục &amp; Đào Tạo. Hỗ trợ phím Enter/Mũi tên để di chuyển nhanh giữa các ô.
-            </p>
+            )}
           </div>
-
-          {/* Action Ribbon */}
-          <div className="flex items-center gap-2.5 flex-wrap shrink-0">
-            <button
-              type="button"
-              onClick={handleExport}
-              className="flex items-center gap-2 px-4 py-2.5 bg-surface-container text-on-surface rounded-xl hover:bg-surface-container-high transition-colors text-xs sm:text-sm font-semibold cursor-pointer border border-outline-variant/20"
-            >
-              <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
-              <span>Xuất Excel</span>
-            </button>
-            <button
-              type="button"
-              onClick={handleCalculateAll}
-              className="flex items-center gap-2 px-4 py-2.5 bg-secondary-fixed/50 text-secondary rounded-xl hover:bg-secondary-fixed transition-colors text-xs sm:text-sm font-semibold cursor-pointer border border-secondary/20"
-            >
-              <Sparkles className="w-4 h-4" />
-              <span>Tính lại ĐTB</span>
-            </button>
-            <button
-              type="button"
-              onClick={handleLockGrades}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-colors text-xs sm:text-sm font-semibold cursor-pointer border ${
-                isLocked
-                  ? 'bg-amber-100 text-amber-900 border-amber-300'
-                  : 'bg-surface-container text-on-surface border-outline-variant/20 hover:bg-surface-container-high'
-              }`}
-            >
-              <Lock className="w-4 h-4" />
-              <span>{isLocked ? 'Đã khóa sổ' : 'Khóa sổ điểm'}</span>
-            </button>
-            <button
-              type="button"
-              onClick={handleSaveAll}
-              className="flex items-center gap-2 px-5 py-2.5 bg-primary text-on-primary rounded-xl hover:bg-primary-container shadow hover:shadow-md transition-all text-xs sm:text-sm font-semibold cursor-pointer"
-            >
-              <Save className="w-4 h-4" />
-              <span>Lưu bảng điểm</span>
-            </button>
-          </div>
+          <p className="text-xs sm:text-sm text-on-surface-variant max-w-2xl leading-relaxed">
+            Nhập điểm kiểm tra thường xuyên, giữa kỳ, cuối kỳ (thang 0–10). Dùng Enter/mũi tên để di chuyển giữa các ô. Điểm chỉ được ghi vào hệ thống sau khi bấm &quot;Lưu bảng điểm&quot;.
+          </p>
         </div>
 
-        {/* Filter Toolbar */}
-        <GradeFilters
-          filters={filters}
-          onChange={(newFilters) => setFilters((prev) => ({ ...prev, ...newFilters }))}
-        />
-
-        {/* Grade Ledger Table with Inline Editing */}
-        <div className="flex flex-col">
-          <GradeTable
-            records={records}
-            onCellChange={handleCellChange}
-            isLocked={isLocked}
-          />
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            totalItems={totalStudents}
-            pageSize={pageSize}
-            onPageChange={setCurrentPage}
-            itemLabel="học sinh"
-          />
-        </div>
-
-        {/* Bottom Analytics & Highlights */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
-            <GradeDistributionCard records={records} />
-          </div>
-          <div>
-            <ValedictorianCard />
-          </div>
+        <div className="flex items-center gap-2.5 flex-wrap shrink-0">
+          <button type="button" onClick={handleExport} disabled={records.length === 0}
+            className="flex items-center gap-2 px-4 py-2.5 bg-surface-container text-on-surface rounded-xl hover:bg-surface-container-high transition-colors text-xs sm:text-sm font-semibold cursor-pointer border border-outline-variant/20 disabled:opacity-50">
+            <Download className="w-4 h-4 text-emerald-600" />
+            <span>Xuất CSV</span>
+          </button>
+          <button type="button" onClick={handleReload} disabled={!canEdit || isLoading}
+            className="flex items-center gap-2 px-4 py-2.5 bg-surface-container text-on-surface rounded-xl hover:bg-surface-container-high transition-colors text-xs sm:text-sm font-semibold cursor-pointer border border-outline-variant/20 disabled:opacity-50">
+            <RotateCcw className="w-4 h-4" />
+            <span>Tải lại</span>
+          </button>
+          <button type="button" onClick={handleSave} disabled={!canEdit || isSaving || isLoading || !isDirty}
+            className="flex items-center gap-2 px-5 py-2.5 bg-primary text-on-primary rounded-xl hover:bg-primary-container shadow hover:shadow-md transition-all text-xs sm:text-sm font-semibold cursor-pointer disabled:opacity-50">
+            <Save className="w-4 h-4" />
+            <span>{isSaving ? 'Đang lưu...' : isDirty ? 'Lưu bảng điểm' : 'Đã lưu'}</span>
+          </button>
         </div>
       </div>
-    
+
+      {optionsError && <p role="alert" className="rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700">{optionsError}</p>}
+      {noAssignment && (
+        <p className="rounded-xl bg-surface-container-low border border-outline-variant/30 px-4 py-3 text-sm text-on-surface-variant">
+          Bạn chưa được phân công dạy môn nào ở lớp nào. Hãy nhờ quản trị viên phân công (giáo viên – lớp – môn) để bắt đầu nhập điểm.
+        </p>
+      )}
+
+      <GradeFilters filters={filters} classes={classOptions} subjects={subjectOptions} onChange={handleFilterChange} />
+
+      {error && <p role="alert" className="rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700">{error}</p>}
+
+      <div className="flex flex-col">
+        {isLoading ? (
+          <div className="bg-surface-container-lowest rounded-2xl p-10 text-center text-sm text-on-surface-variant border border-outline-variant/20">
+            Đang tải bảng điểm...
+          </div>
+        ) : (
+          <GradeTable
+            records={pageRecords}
+            onCellChange={handleCellChange}
+            viewType={filters.viewType}
+            startIndex={(currentPage - 1) * pageSize}
+          />
+        )}
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={totalStudents}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          itemLabel="học sinh"
+        />
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="p-5 bg-surface-container-lowest rounded-2xl border border-outline-variant/20 shadow-sm">
+          <span className="text-xs font-semibold text-outline uppercase tracking-wider">Sĩ số</span>
+          <p className="text-2xl font-bold font-mono text-on-surface mt-1">{totalStudents}</p>
+        </div>
+        <div className="p-5 bg-surface-container-lowest rounded-2xl border border-outline-variant/20 shadow-sm">
+          <span className="text-xs font-semibold text-outline uppercase tracking-wider">Đã đủ điểm</span>
+          <p className="text-2xl font-bold font-mono text-on-surface mt-1">{completedCount} / {totalStudents}</p>
+        </div>
+        <div className="p-5 bg-surface-container-lowest rounded-2xl border border-outline-variant/20 shadow-sm">
+          <span className="text-xs font-semibold text-outline uppercase tracking-wider">ĐTB lớp</span>
+          <p className="text-2xl font-bold font-mono text-secondary mt-1">{classAverage}</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <GradeDistributionCard records={records} />
+        </div>
+        <div>
+          <ValedictorianCard records={records} className={selectedClass?.name ?? ''} />
+        </div>
+      </div>
+    </div>
   );
 }

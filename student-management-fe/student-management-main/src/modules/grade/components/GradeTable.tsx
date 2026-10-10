@@ -1,18 +1,67 @@
-import React, { useRef } from 'react';
-import { StudentGradeRecord } from '../types';
+import React, { useRef, useState } from 'react';
+import { GradeField, StudentGradeRecord } from '../types';
+import { GRADE_COLUMNS } from '../utils';
 
 interface GradeTableProps {
   records: StudentGradeRecord[];
-  onCellChange: (id: string, field: 'tx1' | 'tx2' | 'tx3' | 'gk' | 'ck', val: string) => void;
+  onCellChange: (id: string, field: GradeField, val: string) => void;
+  viewType?: 'all' | 'tx' | 'exam';
+  /** Số thứ tự của dòng đầu tiên (dùng khi phân trang) */
+  startIndex?: number;
   isLocked?: boolean;
 }
+
+const formatCell = (value: number | null) => (value === null ? '' : String(value));
+const parseCell = (text: string): number | null => {
+  const clean = text.replace(',', '.').trim();
+  if (clean === '') return null;
+  const n = Number(clean);
+  return Number.isNaN(n) ? null : n;
+};
+
+/** Ô nhập điểm giữ văn bản đang gõ (vd "8.") để người dùng nhập được số thập phân. */
+const CellInput: React.FC<{
+  value: number | null;
+  onChange: (text: string) => void;
+  onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  row: number;
+  col: number;
+  disabled?: boolean;
+  accent?: boolean;
+  label: string;
+}> = ({ value, onChange, onKeyDown, row, col, disabled, accent, label }) => {
+  const [text, setText] = useState(formatCell(value));
+  if (parseCell(text) !== value) {
+    setText(formatCell(value));
+  }
+  return (
+    <input
+      type="text"
+      inputMode="decimal"
+      aria-label={label}
+      disabled={disabled}
+      data-row={row}
+      data-col={col}
+      value={text}
+      onChange={(e) => {
+        setText(e.target.value);
+        onChange(e.target.value);
+      }}
+      onKeyDown={onKeyDown}
+      className={`w-20 h-10 text-center font-mono text-xs rounded-xl bg-surface-container-low focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:outline-none font-semibold transition-all disabled:opacity-50 ${accent ? 'text-primary' : ''}`}
+    />
+  );
+};
 
 export const GradeTable: React.FC<GradeTableProps> = ({
   records,
   onCellChange,
+  viewType = 'all',
+  startIndex = 0,
   isLocked,
 }) => {
   const tableRef = useRef<HTMLTableElement>(null);
+  const columns = GRADE_COLUMNS.filter((c) => viewType === 'all' || c.group === viewType);
 
   const handleKeyDown = (
     e: React.KeyboardEvent<HTMLInputElement>,
@@ -30,7 +79,7 @@ export const GradeTable: React.FC<GradeTableProps> = ({
       targetRow = rowIndex - 1;
     } else if (e.key === 'Enter') {
       e.preventDefault();
-      if (colIndex < 4) {
+      if (colIndex < columns.length - 1) {
         targetCol = colIndex + 1;
       } else {
         targetRow = rowIndex + 1;
@@ -93,123 +142,57 @@ export const GradeTable: React.FC<GradeTableProps> = ({
               <th className="py-3 px-4 text-center w-12 font-semibold">STT</th>
               <th className="py-3 px-4 w-28 font-semibold">Mã HS</th>
               <th className="py-3 px-6 min-w-[200px] font-semibold">Họ và Tên</th>
-              <th className="py-3 px-2 text-center w-28 font-semibold">Miệng (TX1)</th>
-              <th className="py-3 px-2 text-center w-28 font-semibold">15 Phút (TX2)</th>
-              <th className="py-3 px-2 text-center w-28 font-semibold">1 Tiết (TX3)</th>
-              <th className="py-3 px-2 text-center w-28 font-bold text-primary">Giữa Kỳ (x2)</th>
-              <th className="py-3 px-2 text-center w-28 font-bold text-primary">Cuối Kỳ (x3)</th>
+              {columns.map((c) => (
+                <th key={c.field} className={`py-3 px-2 text-center w-28 ${c.group === 'exam' ? 'font-bold text-primary' : 'font-semibold'}`}>
+                  {c.label}
+                </th>
+              ))}
               <th className="py-3 px-4 text-right w-28 font-semibold text-secondary">ĐTB Môn</th>
               <th className="py-3 px-6 text-center w-32 font-semibold">Xếp Loại</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-outline-variant/15 text-sm text-on-surface font-sans">
-            {records.map((r, rowIndex) => {
-              const indexStr = (rowIndex + 1).toString().padStart(2, '0');
-
-              return (
-                <tr
-                  key={r.id}
-                  className="hover:bg-surface-container-low/60 transition-colors"
-                >
-                  <td className="py-2.5 px-4 text-center font-mono text-xs text-outline">
-                    {indexStr}
-                  </td>
-
-                  <td className="py-2.5 px-4 font-mono text-xs font-semibold text-on-surface">
-                    {r.studentCode}
-                  </td>
-
-                  <td className="py-2.5 px-6 font-medium">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-7 h-7 rounded-full bg-secondary-fixed text-on-secondary-fixed flex items-center justify-center font-bold text-[11px] shrink-0">
-                        {r.avatarInitials}
-                      </div>
-                      <span className="truncate">{r.fullName}</span>
+            {records.length === 0 && (
+              <tr>
+                <td colSpan={5 + columns.length} className="py-10 text-center text-sm text-on-surface-variant">
+                  Lớp này chưa có học sinh đang theo học.
+                </td>
+              </tr>
+            )}
+            {records.map((r, rowIndex) => (
+              <tr key={r.id} className="hover:bg-surface-container-low/60 transition-colors">
+                <td className="py-2.5 px-4 text-center font-mono text-xs text-outline">
+                  {(startIndex + rowIndex + 1).toString().padStart(2, '0')}
+                </td>
+                <td className="py-2.5 px-4 font-mono text-xs font-semibold text-on-surface">{r.studentCode}</td>
+                <td className="py-2.5 px-6 font-medium">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-full bg-secondary-fixed text-on-secondary-fixed flex items-center justify-center font-bold text-[11px] shrink-0">
+                      {r.avatarInitials}
                     </div>
-                  </td>
-
-                  {/* TX1 */}
-                  <td className="py-2.5 px-1 text-center">
-                    <input
-                      type="text"
+                    <span className="truncate">{r.fullName}</span>
+                  </div>
+                </td>
+                {columns.map((c, colIndex) => (
+                  <td key={c.field} className="py-2.5 px-1 text-center">
+                    <CellInput
+                      value={r[c.field]}
+                      label={`${c.label} - ${r.fullName}`}
+                      row={rowIndex}
+                      col={colIndex}
                       disabled={isLocked}
-                      data-row={rowIndex}
-                      data-col={0}
-                      value={r.tx1 ?? ''}
-                      onChange={(e) => onCellChange(r.id, 'tx1', e.target.value)}
-                      onKeyDown={(e) => handleKeyDown(e, rowIndex, 0)}
-                      className="w-20 h-10 text-center font-mono text-xs rounded-xl bg-surface-container-low focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:outline-none font-semibold transition-all disabled:opacity-50"
+                      accent={c.group === 'exam'}
+                      onChange={(text) => onCellChange(r.id, c.field, text)}
+                      onKeyDown={(e) => handleKeyDown(e, rowIndex, colIndex)}
                     />
                   </td>
-
-                  {/* TX2 */}
-                  <td className="py-2.5 px-1 text-center">
-                    <input
-                      type="text"
-                      disabled={isLocked}
-                      data-row={rowIndex}
-                      data-col={1}
-                      value={r.tx2 ?? ''}
-                      onChange={(e) => onCellChange(r.id, 'tx2', e.target.value)}
-                      onKeyDown={(e) => handleKeyDown(e, rowIndex, 1)}
-                      className="w-20 h-10 text-center font-mono text-xs rounded-xl bg-surface-container-low focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:outline-none font-semibold transition-all disabled:opacity-50"
-                    />
-                  </td>
-
-                  {/* TX3 */}
-                  <td className="py-2.5 px-1 text-center">
-                    <input
-                      type="text"
-                      disabled={isLocked}
-                      data-row={rowIndex}
-                      data-col={2}
-                      value={r.tx3 ?? ''}
-                      onChange={(e) => onCellChange(r.id, 'tx3', e.target.value)}
-                      onKeyDown={(e) => handleKeyDown(e, rowIndex, 2)}
-                      className="w-20 h-10 text-center font-mono text-xs rounded-xl bg-surface-container-low focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:outline-none font-semibold transition-all disabled:opacity-50"
-                    />
-                  </td>
-
-                  {/* GK (x2) */}
-                  <td className="py-2.5 px-1 text-center">
-                    <input
-                      type="text"
-                      disabled={isLocked}
-                      data-row={rowIndex}
-                      data-col={3}
-                      value={r.gk ?? ''}
-                      onChange={(e) => onCellChange(r.id, 'gk', e.target.value)}
-                      onKeyDown={(e) => handleKeyDown(e, rowIndex, 3)}
-                      className="w-20 h-10 text-center font-mono text-xs rounded-xl bg-surface-container-low focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:outline-none font-semibold text-primary transition-all disabled:opacity-50"
-                    />
-                  </td>
-
-                  {/* CK (x3) */}
-                  <td className="py-2.5 px-1 text-center">
-                    <input
-                      type="text"
-                      disabled={isLocked}
-                      data-row={rowIndex}
-                      data-col={4}
-                      value={r.ck ?? ''}
-                      onChange={(e) => onCellChange(r.id, 'ck', e.target.value)}
-                      onKeyDown={(e) => handleKeyDown(e, rowIndex, 4)}
-                      className="w-20 h-10 text-center font-mono text-xs rounded-xl bg-surface-container-low focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:outline-none font-semibold text-primary transition-all disabled:opacity-50"
-                    />
-                  </td>
-
-                  {/* ĐTB */}
-                  <td className="py-2.5 px-4 text-right font-mono text-sm font-bold text-secondary">
-                    {r.avgScore !== null ? r.avgScore.toFixed(1) : '--'}
-                  </td>
-
-                  {/* Xếp Loại */}
-                  <td className="py-2.5 px-6 text-center">
-                    {getRankBadge(r.rank)}
-                  </td>
-                </tr>
-              );
-            })}
+                ))}
+                <td className="py-2.5 px-4 text-right font-mono text-sm font-bold text-secondary">
+                  {r.avgScore !== null ? r.avgScore.toFixed(1) : '--'}
+                </td>
+                <td className="py-2.5 px-6 text-center">{getRankBadge(r.rank)}</td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>

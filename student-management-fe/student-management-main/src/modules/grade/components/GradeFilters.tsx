@@ -1,75 +1,84 @@
 import React from 'react';
 import { GradeFiltersState } from '../types';
+import { semesterOptions } from '../utils';
+import { TeachingClassOption, TeachingSubjectOption } from '@/modules/teaching/types';
 import { ChevronDown } from 'lucide-react';
 
 interface GradeFiltersProps {
   filters: GradeFiltersState;
+  classes: TeachingClassOption[];
+  subjects: TeachingSubjectOption[];
   onChange: (filters: Partial<GradeFiltersState>) => void;
 }
 
-export const GradeFilters: React.FC<GradeFiltersProps> = ({ filters, onChange }) => {
+const selectClass =
+  'w-full h-11 px-3.5 pr-8 bg-surface-container-low text-on-surface text-xs sm:text-sm rounded-xl appearance-none focus:outline-none focus:bg-surface-container-lowest focus:ring-2 focus:ring-secondary/20 transition-all cursor-pointer border border-transparent focus:border-secondary';
+
+export const GradeFilters: React.FC<GradeFiltersProps> = ({ filters, classes, subjects, onChange }) => {
+  const semesters = semesterOptions();
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-5 bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant/20">
-      {/* Class */}
       <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-semibold text-on-surface">Lớp học</label>
+        <label htmlFor="grade-class" className="text-xs font-semibold text-on-surface">Lớp học</label>
         <div className="relative">
           <select
-            value={filters.className}
-            onChange={(e) => onChange({ className: e.target.value })}
-            className="w-full h-11 px-3.5 pr-8 bg-surface-container-low text-on-surface text-xs sm:text-sm rounded-xl appearance-none focus:outline-none focus:bg-surface-container-lowest focus:ring-2 focus:ring-secondary/20 transition-all cursor-pointer border border-transparent focus:border-secondary"
+            id="grade-class"
+            value={filters.classId}
+            onChange={(e) => onChange({ classId: e.target.value })}
+            className={selectClass}
           >
-            <option value="10A1">Lớp 10A1</option>
-            <option value="11B1">Lớp 11B1</option>
+            {classes.length === 0 && <option value="">Chưa có lớp nào</option>}
+            {classes.map((c) => (
+              <option key={c.id} value={c.id}>Lớp {c.name} (Khối {c.gradeLevel})</option>
+            ))}
           </select>
           <ChevronDown className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-outline" />
         </div>
       </div>
 
-      {/* Subject */}
       <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-semibold text-on-surface">Môn học</label>
+        <label htmlFor="grade-subject" className="text-xs font-semibold text-on-surface">Môn học</label>
         <div className="relative">
           <select
-            value={filters.subject}
-            onChange={(e) => onChange({ subject: e.target.value })}
-            className="w-full h-11 px-3.5 pr-8 bg-surface-container-low text-on-surface text-xs sm:text-sm rounded-xl appearance-none focus:outline-none focus:bg-surface-container-lowest focus:ring-2 focus:ring-secondary/20 transition-all cursor-pointer border border-transparent focus:border-secondary"
+            id="grade-subject"
+            value={filters.subjectId}
+            onChange={(e) => onChange({ subjectId: e.target.value })}
+            className={selectClass}
           >
-            <option value="math">Toán học (Hệ số THPT)</option>
-            <option value="phys">Vật lý</option>
-            <option value="chem">Hóa học</option>
-            <option value="lit">Ngữ văn</option>
-            <option value="eng">Tiếng Anh</option>
+            {subjects.length === 0 && <option value="">Chưa có môn nào</option>}
+            {subjects.map((s) => (
+              <option key={s.id} value={s.id}>{s.name}</option>
+            ))}
           </select>
           <ChevronDown className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-outline" />
         </div>
       </div>
 
-      {/* Semester */}
       <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-semibold text-on-surface">Học kỳ &amp; Niên khóa</label>
+        <label htmlFor="grade-semester" className="text-xs font-semibold text-on-surface">Học kỳ &amp; Niên khóa</label>
         <div className="relative">
           <select
+            id="grade-semester"
             value={filters.semester}
             onChange={(e) => onChange({ semester: e.target.value })}
-            className="w-full h-11 px-3.5 pr-8 bg-surface-container-low text-on-surface text-xs sm:text-sm rounded-xl appearance-none focus:outline-none focus:bg-surface-container-lowest focus:ring-2 focus:ring-secondary/20 transition-all cursor-pointer border border-transparent focus:border-secondary"
+            className={selectClass}
           >
-            <option value="sem2-2023-2024">Học kỳ II (2023 - 2024)</option>
-            <option value="sem1-2023-2024">Học kỳ I (2023 - 2024)</option>
-            <option value="sem2-2022-2023">Học kỳ II (2022 - 2023)</option>
+            {semesters.map((s) => (
+              <option key={s.value} value={s.value}>{s.label}</option>
+            ))}
           </select>
           <ChevronDown className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-outline" />
         </div>
       </div>
 
-      {/* View Type */}
       <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-semibold text-on-surface">Loại điểm hiển thị</label>
+        <label htmlFor="grade-view" className="text-xs font-semibold text-on-surface">Loại điểm hiển thị</label>
         <div className="relative">
           <select
+            id="grade-view"
             value={filters.viewType}
             onChange={(e) => onChange({ viewType: e.target.value as GradeFiltersState['viewType'] })}
-            className="w-full h-11 px-3.5 pr-8 bg-surface-container-low text-on-surface text-xs sm:text-sm rounded-xl appearance-none focus:outline-none focus:bg-surface-container-lowest focus:ring-2 focus:ring-secondary/20 transition-all cursor-pointer border border-transparent focus:border-secondary"
+            className={selectClass}
           >
             <option value="all">Tất cả cột điểm (TX, GK, CK)</option>
             <option value="tx">Chỉ Điểm thường xuyên (TX1, TX2, TX3)</option>

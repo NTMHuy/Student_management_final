@@ -1,7 +1,11 @@
 export type GradeRank = 'Giỏi' | 'Khá' | 'Đạt' | 'Chưa đạt';
 
+export type GradeField = 'tx1' | 'tx2' | 'tx3' | 'gk' | 'ck';
+
 export interface StudentGradeRecord {
+  /** id học sinh (dạng chuỗi) - khóa của dòng trong bảng điểm */
   id: string;
+  studentId: number;
   studentCode: string;
   fullName: string;
   avatarInitials: string;
@@ -15,8 +19,9 @@ export interface StudentGradeRecord {
 }
 
 export interface GradeFiltersState {
-  className: string;
-  subject: string;
+  classId: string;
+  subjectId: string;
+  /** "<năm học>|<học kỳ>", ví dụ "2025-2026|1" */
   semester: string;
   viewType: 'all' | 'tx' | 'exam';
 }
