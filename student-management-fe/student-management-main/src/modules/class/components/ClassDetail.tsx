@@ -8,7 +8,7 @@ interface ClassDetailProps {
   isOpen: boolean;
   onClose: () => void;
   schoolClass: SchoolClass | null;
-  onUpdateTeacher: (classId: string, teacher: SchoolClass['homeroomTeacher']) => Promise<void>;
+  onUpdateTeacher: (classId: string, teacher: SchoolClass['homeroomTeacher'] | null) => Promise<void>;
   onAddStudent: (classId: string, student: { fullName: string; studentCode: string; dateOfBirth: string }) => Promise<void>;
   onRemoveStudent: (classId: string, studentId: string) => Promise<void>;
 }
