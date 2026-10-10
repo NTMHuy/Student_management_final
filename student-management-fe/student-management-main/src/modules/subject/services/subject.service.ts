@@ -26,6 +26,8 @@ function toRequest(data: SubjectFormData, current?: SubjectApiResponse) {
     grade11Periods: Number(data.grade11Periods),
     grade12Periods: Number(data.grade12Periods),
     description: data.description ?? current?.description ?? "",
+    // SubjectResponse explicitly returns headTeacherId. Preserve it on edit instead
+    // of silently clearing the relation when the subject is saved.
     headTeacherId: current?.headTeacherId ?? null,
     status: current?.status ?? "active",
   };
@@ -36,7 +38,8 @@ export const subjectService = {
     return apiRequest<Subject[]>(`${API_ENDPOINTS.subjects}${toQueryString(filters)}`);
   },
 
-  async getSubject(id: string): Promise<Subject | null> {
+  async getSubject(id: string): Promise<SubjectApiResponse | null> {
+    if (!/^\d+$/.test(id)) return null;
     try {
       return await apiRequest<SubjectApiResponse>(
         `${API_ENDPOINTS.subjects}/${encodeURIComponent(id)}`,
@@ -61,7 +64,7 @@ export const subjectService = {
     try {
       return await apiRequest<Subject>(
         `${API_ENDPOINTS.subjects}/${encodeURIComponent(id)}`,
-        { method: "PUT", body: toRequest(data, current as SubjectApiResponse) },
+        { method: "PUT", body: toRequest(data, current) },
       );
     } catch (error) {
       if (error instanceof ApiError && error.status === 404) return null;
@@ -70,6 +73,7 @@ export const subjectService = {
   },
 
   async deleteSubject(id: string): Promise<boolean> {
+    if (!/^\d+$/.test(id)) return false;
     try {
       await apiRequest<void>(`${API_ENDPOINTS.subjects}/${encodeURIComponent(id)}`, {
         method: "DELETE",
