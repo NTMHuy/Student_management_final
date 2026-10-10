@@ -49,6 +49,8 @@ export default function SubjectsPage({ initialEditingId }: SubjectsPageProps) {
   const evaluationSubjects = subjects.filter((subject) => subject.evaluationType === 'evaluation').length;
   const totalPeriods = subjects.reduce((sum, subject) => sum + subject.periodsByGrade.grade10 + subject.periodsByGrade.grade11 + subject.periodsByGrade.grade12, 0);
 
+  React.useEffect(() => { setCurrentPage(1); }, [filters]);
+
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
@@ -140,7 +142,7 @@ export default function SubjectsPage({ initialEditingId }: SubjectsPageProps) {
                   Quản lý Môn học
                 </h1>
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-surface-container text-primary">
-                  Tổng số: {subjects.length} môn học
+                  {subjects.length} môn theo bộ lọc
                 </span>
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-surface-container-high text-secondary">
                   <span className="w-1.5 h-1.5 rounded-full bg-secondary" />
@@ -184,7 +186,7 @@ export default function SubjectsPage({ initialEditingId }: SubjectsPageProps) {
             <div className="flex items-start justify-between">
               <div>
                 <span className="text-xs font-medium text-on-surface-variant block">
-                  Tổng số môn học
+                  Số môn theo bộ lọc
                 </span>
                 <div className="flex items-baseline gap-2 mt-1">
                   <span className="text-3xl font-bold text-on-surface tracking-tight font-mono">{subjects.length}</span>
