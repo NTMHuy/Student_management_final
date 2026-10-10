@@ -29,7 +29,7 @@ export default function ClassesPage() {
 
   useEffect(() => { setCurrentPage(1); }, [filters]);
 
-  const handleUpdateTeacher = async (classId: string, teacher: SchoolClass['homeroomTeacher']) => {
+  const handleUpdateTeacher = async (classId: string, teacher: SchoolClass['homeroomTeacher'] | null) => {
     try {
       const updated = await assignTeacher(classId, teacher);
       if (updated) setManagingClass(updated);
