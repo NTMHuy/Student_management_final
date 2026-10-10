@@ -19,10 +19,8 @@ export const GradeFilters: React.FC<GradeFiltersProps> = ({ filters, onChange })
             onChange={(e) => onChange({ className: e.target.value })}
             className="w-full h-11 px-3.5 pr-8 bg-surface-container-low text-on-surface text-xs sm:text-sm rounded-xl appearance-none focus:outline-none focus:bg-surface-container-lowest focus:ring-2 focus:ring-secondary/20 transition-all cursor-pointer border border-transparent focus:border-secondary"
           >
-            <option value="10A1">Lớp 10A1 (Sĩ số: 38)</option>
-            <option value="10A2">Lớp 10A2 (Sĩ số: 40)</option>
-            <option value="11B1">Lớp 11B1 (Sĩ số: 36)</option>
-            <option value="12C3">Lớp 12C3 (Sĩ số: 35)</option>
+            <option value="10A1">Lớp 10A1</option>
+            <option value="11B1">Lớp 11B1</option>
           </select>
           <ChevronDown className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-outline" />
         </div>
