@@ -1,17 +1,35 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Breadcrumb } from '@/components/layout/Breadcrumb';
 import { useRouter } from 'next/navigation';
-import { useSubjects } from '@/modules/subject/hooks/useSubjects';
+import { subjectService } from '@/modules/subject/services/subject.service';
+import { Subject } from '@/modules/subject/types';
 import { ArrowLeft, BookOpen, Clock, Layers, Award } from 'lucide-react';
 
 export default function SubjectDetailPage({ params }: { params?: { id: string } }) {
   const router = useRouter();
-  const { subjects } = useSubjects();
+  const [subject, setSubject] = useState<Subject | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const subjectId = params?.id || 'sub-01';
-  const subject = subjects.find((s) => s.id === subjectId) || subjects[0];
+  useEffect(() => {
+    let active = true;
+    if (!params?.id) {
+      setSubject(null);
+      setIsLoading(false);
+      return () => { active = false; };
+    }
+    setIsLoading(true);
+    subjectService.getSubject(params.id)
+      .then((item) => { if (active) setSubject(item); })
+      .catch(() => { if (active) setSubject(null); })
+      .finally(() => { if (active) setIsLoading(false); });
+    return () => { active = false; };
+  }, [params?.id]);
+
+  if (isLoading) {
+    return <div className="p-8 text-center text-on-surface-variant">Đang tải chi tiết môn học...</div>;
+  }
 
   if (!subject) {
     return (
