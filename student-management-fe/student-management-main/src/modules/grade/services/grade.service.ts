@@ -115,9 +115,22 @@ export const gradeService = {
   async saveAllGrades(records: StudentGradeRecord[], filters?: Partial<GradeFiltersState>): Promise<boolean> {
     const { classId, subjectId, semester, schoolYear } = await resolveFilters(filters);
     const requests = records.flatMap((record) =>
-      (Object.keys(FIELD_TO_ASSESSMENT) as GradeField[])
-        .filter((field) => record[field] !== null)
-        .map((field) => apiRequest<GradeApiRow>(API_ENDPOINTS.grades, {
+      (Object.keys(FIELD_TO_ASSESSMENT) as GradeField[]).map((field) => {
+        const params = new URLSearchParams({
+          studentId: record.id,
+          classId,
+          subjectId,
+          schoolYear,
+          semester: String(semester),
+          assessmentType: FIELD_TO_ASSESSMENT[field],
+          assessmentNumber: "1",
+        });
+        if (record[field] === null) {
+          return apiRequest<void>(`${API_ENDPOINTS.grades}?${params.toString()}`, {
+            method: "DELETE",
+          });
+        }
+        return apiRequest<GradeApiRow>(API_ENDPOINTS.grades, {
           method: "PUT",
           body: {
             studentId: Number(record.id),
@@ -129,7 +142,8 @@ export const gradeService = {
             assessmentNumber: 1,
             score: record[field],
           },
-        })),
+        });
+      }),
     );
     await Promise.all(requests);
     return true;
