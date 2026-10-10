@@ -17,7 +17,7 @@ export const useAttendance = (initialDailyFilters?: Partial<AttendanceFiltersSta
 
   const [dailyFilters, setDailyFilters] = useState<AttendanceFiltersState>({
     className: initialDailyFilters?.className || '10a1',
-    date: initialDailyFilters?.date || '2024-05-17',
+    date: initialDailyFilters?.date || (() => {\n      const today = new Date();\n      return [today.getFullYear(), String(today.getMonth() + 1).padStart(2, '0'), String(today.getDate()).padStart(2, '0')].join('-');\n    })(),
     subjectSlot: initialDailyFilters?.subjectSlot || 't2-math',
   });
 
