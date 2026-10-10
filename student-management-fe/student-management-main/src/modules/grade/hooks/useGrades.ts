@@ -55,7 +55,7 @@ export const useGrades = (initialFilters?: Partial<GradeFiltersState>) => {
   };
 
   const saveGrades = async () => {
-    return await gradeService.saveAllGrades(records);
+    return await gradeService.saveAllGrades(records, filters);
   };
 
   // Aggregates
