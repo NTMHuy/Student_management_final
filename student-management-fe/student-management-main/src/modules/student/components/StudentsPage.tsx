@@ -26,6 +26,7 @@ export default function StudentsPage() {
   const {
     students,
     isLoading,
+    error,
     filters,
     updateFilters,
     resetFilters,
@@ -162,6 +163,8 @@ export default function StudentsPage() {
             </button>
           </div>
         </div>
+
+        {error && <p role="alert" className="rounded-xl bg-error/10 px-4 py-3 text-sm text-error">{error}</p>}
 
         {/* KPI Overview Micro-Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
