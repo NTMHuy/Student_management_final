@@ -92,6 +92,35 @@ public class GradeController {
             body.studentId(),body.subjectId(),body.schoolYear(),body.semester(),body.assessmentType(),body.assessmentNumber());
     }
 
+
+    @DeleteMapping
+    @Transactional
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@AuthenticationPrincipal Jwt jwt,
+            @RequestParam Long studentId, @RequestParam Long classId,
+            @RequestParam Long subjectId, @RequestParam String schoolYear,
+            @RequestParam Integer semester, @RequestParam String assessmentType,
+            @RequestParam(defaultValue = "1") Integer assessmentNumber) {
+        Actor actor = actors.from(jwt);
+        requireClassSubjectAccess(actor, classId, subjectId);
+        if (!List.of(1, 2).contains(semester)
+                || !List.of("ORAL", "FIFTEEN_MIN", "ONE_PERIOD", "MIDTERM", "FINAL").contains(assessmentType)
+                || assessmentNumber < 1) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Thông tin điểm cần xóa không hợp lệ");
+        }
+        Integer belongs = jdbc.queryForObject(
+                "SELECT count(*) FROM students WHERE id=? AND class_id=?",
+                Integer.class, studentId, classId);
+        if (belongs == null || belongs == 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Học sinh không thuộc lớp");
+        }
+        jdbc.update("""
+            DELETE FROM grade_records
+            WHERE student_id=? AND class_id=? AND subject_id=? AND school_year=?
+              AND semester=? AND assessment_type=? AND assessment_number=?
+            """, studentId, classId, subjectId, schoolYear, semester, assessmentType, assessmentNumber);
+    }
+
     private Integer nullableInt(java.sql.ResultSet rs, String column) throws java.sql.SQLException {\n        int value = rs.getInt(column);\n        return rs.wasNull() ? null : value;\n    }\n\n    private void requireClassSubjectAccess(Actor actor, Long classId, Long subjectId) {
         if (actor.isAdmin()) return;
         if (actor.teacherId() == null) throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Tài khoản chưa gắn hồ sơ giáo viên");
