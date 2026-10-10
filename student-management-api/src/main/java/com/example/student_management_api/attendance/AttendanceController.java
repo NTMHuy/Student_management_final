@@ -36,14 +36,14 @@ public class AttendanceController {
         Actor actor = actors.from(jwt);
         requireClassAccess(actor, classId, subjectId);
         return jdbc.query("""
-            SELECT ar.id, s.id, s.student_code, s.full_name, ar.status, ar.note
+            SELECT ar.id AS attendance_id, s.id AS student_id, s.student_code, s.full_name, ar.status, ar.note
             FROM students s
             LEFT JOIN attendance_records ar
               ON ar.student_id = s.id AND ar.attendance_date = ? AND ar.session = ?
             WHERE s.class_id = ? AND s.status = 'ACTIVE'
             ORDER BY s.student_code
             """, (rs, n) -> new AttendanceRow(
-                (Long) rs.getObject("id"), rs.getLong("id"), rs.getString("student_code"),
+                (Long) rs.getObject("attendance_id"), rs.getLong("student_id"), rs.getString("student_code"),
                 rs.getString("full_name"), rs.getString("status"), rs.getString("note")),
             date, session, classId);
     }
