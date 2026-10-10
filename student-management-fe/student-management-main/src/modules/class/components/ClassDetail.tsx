@@ -37,7 +37,15 @@ export const ClassDetail: React.FC<ClassDetailProps> = ({
 
   const handleTeacherChangeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const teacher = teachers.find((item) => item.id === selectedTeacherId) ?? null;
+    const selectedTeacher = teachers.find((item) => item.id === selectedTeacherId);
+    const teacher = selectedTeacher ? {
+      id: selectedTeacher.id,
+      fullName: selectedTeacher.fullName,
+      department: selectedTeacher.department,
+      email: selectedTeacher.email,
+      experience: selectedTeacher.titleRole || '',
+      avatarInitials: selectedTeacher.avatarInitials,
+    } : null;
     await onUpdateTeacher(schoolClass.id, teacher);
     setIsChangingTeacher(false);
   };
