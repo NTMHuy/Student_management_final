@@ -6,6 +6,7 @@ export const API_ENDPOINTS = {
   },
   students: "/api/students",
   teachers: "/api/teachers",
+  users: "/api/users",
   classes: "/api/classes",
   subjects: "/api/subjects",
   grades: "/api/grades",
