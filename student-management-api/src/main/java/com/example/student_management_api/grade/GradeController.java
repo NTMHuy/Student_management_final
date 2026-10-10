@@ -37,13 +37,13 @@ public class GradeController {
             SELECT gr.id, s.id AS student_id, s.student_code, s.full_name, gr.subject_id,
                    gr.school_year, gr.semester, gr.assessment_type, gr.assessment_number, gr.score, gr.note
             FROM students s LEFT JOIN grade_records gr
-              ON gr.student_id=s.id AND gr.subject_id=? AND gr.school_year=? AND gr.semester=?
+              ON gr.student_id=s.id AND gr.class_id=s.class_id AND gr.subject_id=? AND gr.school_year=? AND gr.semester=?
             WHERE s.class_id=? AND s.status='ACTIVE' ORDER BY s.student_code, gr.assessment_type, gr.assessment_number
             """, (rs,n) -> new GradeRow((Long) rs.getObject("id"), rs.getLong("student_id"),
                 rs.getString("student_code"), rs.getString("full_name"),
                 (Long) rs.getObject("subject_id"), rs.getString("school_year"),
-                (Integer) rs.getObject("semester"), rs.getString("assessment_type"),
-                (Integer) rs.getObject("assessment_number"), rs.getBigDecimal("score"), rs.getString("note")),
+                nullableInt(rs, "semester"), rs.getString("assessment_type"),
+                nullableInt(rs, "assessment_number"), rs.getBigDecimal("score"), rs.getString("note")),
             subjectId, schoolYear, semester, classId);
     }
 
@@ -51,6 +51,9 @@ public class GradeController {
     @Transactional
     public GradeRow upsert(@AuthenticationPrincipal Jwt jwt, @RequestBody GradeUpdate body) {
         Actor actor = actors.from(jwt);
+        if (body == null || body.studentId() == null || body.classId() == null || body.subjectId() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Thiếu thông tin học sinh, lớp hoặc môn học");
+        }
         requireClassSubjectAccess(actor, body.classId(), body.subjectId());
         if (body.studentId() == null || body.schoolYear() == null || body.schoolYear().isBlank()
                 || body.semester() == null || !List.of(1,2).contains(body.semester())
@@ -89,7 +92,7 @@ public class GradeController {
             body.studentId(),body.subjectId(),body.schoolYear(),body.semester(),body.assessmentType(),body.assessmentNumber());
     }
 
-    private void requireClassSubjectAccess(Actor actor, Long classId, Long subjectId) {
+    private Integer nullableInt(java.sql.ResultSet rs, String column) throws java.sql.SQLException {\n        int value = rs.getInt(column);\n        return rs.wasNull() ? null : value;\n    }\n\n    private void requireClassSubjectAccess(Actor actor, Long classId, Long subjectId) {
         if (actor.isAdmin()) return;
         if (actor.teacherId() == null) throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Tài khoản chưa gắn hồ sơ giáo viên");
         Integer allowed = jdbc.queryForObject("""
