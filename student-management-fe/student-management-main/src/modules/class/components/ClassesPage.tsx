@@ -12,7 +12,7 @@ import { Download, Plus, Building, Users, BadgeCheck, DoorOpen, Search, RotateCc
 
 export default function ClassesPage() {
   const router = useRouter();
-  const { classes, isLoading, error, filters, updateFilters, resetFilters, assignTeacher, addStudent, removeStudent } = useClasses();
+  const { classes, isLoading, error, filters, updateFilters, resetFilters, assignTeacher } = useClasses();
   const [managingClass, setManagingClass] = useState<SchoolClass | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 6;
@@ -38,23 +38,7 @@ export default function ClassesPage() {
     }
   };
 
-  const handleAddStudent = async (classId: string, student: { fullName: string; studentCode: string; dateOfBirth: string }) => {
-    try {
-      const updated = await addStudent(classId, student);
-      if (updated) setManagingClass(updated);
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Thao tác thêm học sinh chưa được hỗ trợ bởi backend.');
-    }
-  };
 
-  const handleRemoveStudent = async (classId: string, studentId: string) => {
-    try {
-      const updated = await removeStudent(classId, studentId);
-      if (updated) setManagingClass(updated);
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Thao tác chuyển học sinh chưa được hỗ trợ bởi backend.');
-    }
-  };
 
   return (
     <div className="flex flex-col gap-6 relative">
@@ -118,7 +102,7 @@ export default function ClassesPage() {
         <Pagination currentPage={Math.min(currentPage, totalPages)} totalPages={totalPages} totalItems={totalItems} pageSize={pageSize} onPageChange={setCurrentPage} itemLabel="lớp học" />
       </div>
 
-      <ClassDetail isOpen={!!managingClass} schoolClass={managingClass} onClose={() => setManagingClass(null)} onUpdateTeacher={handleUpdateTeacher} onAddStudent={handleAddStudent} onRemoveStudent={handleRemoveStudent} />
+      <ClassDetail isOpen={!!managingClass} schoolClass={managingClass} onClose={() => setManagingClass(null)} onUpdateTeacher={handleUpdateTeacher} />
     </div>
   );
 }
