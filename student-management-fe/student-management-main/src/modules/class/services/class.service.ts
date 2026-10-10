@@ -1,154 +1,181 @@
+import { apiRequest, ApiError } from "@/lib/api/client";
+import { API_ENDPOINTS } from "@/lib/api/endpoints";
 import { SchoolClass, ClassFiltersState, ClassLeader } from "../types";
-import { initialClasses } from "../mocks/class.mock";
 
-let memoryClasses = [...initialClasses];
+interface ClassApiResponse extends Omit<SchoolClass, "homeroomTeacher"> {
+  name?: string;
+  homeroomTeacher: SchoolClass["homeroomTeacher"] | null;
+}
+
+export interface ClassFormData {
+  className: string;
+  gradeLevel: number;
+  room: string;
+  stream: string;
+  maxStudents: number;
+  status?: "active" | "archived";
+  homeroomTeacherId?: string | null;
+}
+
+function toQueryString(filters?: Partial<ClassFiltersState>): string {
+  const params = new URLSearchParams();
+  if (filters?.search?.trim()) params.set("search", filters.search.trim());
+  if (filters?.gradeLevel) params.set("gradeLevel", filters.gradeLevel);
+  if (filters?.stream?.trim()) params.set("stream", filters.stream.trim());
+  if (filters?.capacity) params.set("capacity", filters.capacity);
+  const query = params.toString();
+  return query ? `?${query}` : "";
+}
+
+function normalizeClass(item: ClassApiResponse): SchoolClass {
+  return {
+    ...item,
+    id: String(item.id),
+    classCode: item.classCode ?? "",
+    className: item.className || item.name || "",
+    homeroomTeacher: item.homeroomTeacher ?? {
+      id: "",
+      fullName: "",
+      department: "",
+      email: "",
+      experience: "",
+      avatarInitials: "",
+    },
+    leaders: item.leaders ?? [],
+    students: item.students ?? [],
+    room: item.room ?? "",
+    stream: item.stream ?? "",
+  };
+}
+
+function toRequest(data: ClassFormData) {
+  return {
+    name: data.className.trim().replace(/^Lớp\s+/i, ""),
+    gradeLevel: Number(data.gradeLevel),
+    room: data.room.trim(),
+    stream: data.stream.trim(),
+    maxStudents: Number(data.maxStudents),
+    status: data.status ?? "active",
+    homeroomTeacherId: data.homeroomTeacherId || null,
+  };
+}
+
+async function getClassById(id: string): Promise<SchoolClass | null> {
+  try {
+    const item = await apiRequest<ClassApiResponse>(
+      `${API_ENDPOINTS.classes}/${encodeURIComponent(id)}`,
+    );
+    return normalizeClass(item);
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) return null;
+    throw error;
+  }
+}
 
 export const classService = {
-  async getClasses(
-    filters?: Partial<ClassFiltersState>,
-  ): Promise<SchoolClass[]> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        let result = [...memoryClasses];
-
-        if (filters?.search) {
-          const q = filters.search.toLowerCase().trim();
-          result = result.filter(
-            (c) =>
-              c.classCode.toLowerCase().includes(q) ||
-              c.className.toLowerCase().includes(q) ||
-              c.homeroomTeacher.fullName.toLowerCase().includes(q) ||
-              c.room.toLowerCase().includes(q) ||
-              c.stream.toLowerCase().includes(q),
-          );
-        }
-
-        if (filters?.gradeLevel) {
-          result = result.filter(
-            (c) => c.gradeLevel.toString() === filters.gradeLevel,
-          );
-        }
-
-        if (filters?.stream) {
-          result = result.filter((c) =>
-            c.stream.toLowerCase().includes(filters.stream!.toLowerCase()),
-          );
-        }
-
-        if (filters?.capacity === "full") {
-          result = result.filter((c) => c.currentStudents >= c.maxStudents);
-        } else if (filters?.capacity === "not_full") {
-          result = result.filter((c) => c.currentStudents < c.maxStudents);
-        }
-
-        resolve(result);
-      }, 200);
-    });
+  async getClasses(filters?: Partial<ClassFiltersState>): Promise<SchoolClass[]> {
+    const items = await apiRequest<ClassApiResponse[]>(
+      `${API_ENDPOINTS.classes}${toQueryString(filters)}`,
+    );
+    return items.map(normalizeClass);
   },
 
-  async getClass(id: string): Promise<SchoolClass | null> {
-    return new Promise((resolve) => {
-      const found = memoryClasses.find(
-        (c) => c.id === id || c.classCode === id,
-      );
-      resolve(found || null);
+  getClass(id: string): Promise<SchoolClass | null> {
+    // The backend identifies classes by their numeric database ID, not classCode.
+    if (!/^\d+$/.test(id)) return Promise.resolve(null);
+    return getClassById(id);
+  },
+
+  async createClass(data: ClassFormData): Promise<SchoolClass> {
+    const item = await apiRequest<ClassApiResponse>(API_ENDPOINTS.classes, {
+      method: "POST",
+      body: toRequest(data),
     });
+    return normalizeClass(item);
+  },
+
+  async updateClass(id: string, data: ClassFormData): Promise<SchoolClass | null> {
+    if (!/^\d+$/.test(id)) return null;
+    try {
+      const item = await apiRequest<ClassApiResponse>(
+        `${API_ENDPOINTS.classes}/${encodeURIComponent(id)}`,
+        { method: "PUT", body: toRequest(data) },
+      );
+      return normalizeClass(item);
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 404) return null;
+      throw error;
+    }
+  },
+
+  async deleteClass(id: string): Promise<boolean> {
+    if (!/^\d+$/.test(id)) return false;
+    try {
+      await apiRequest<void>(`${API_ENDPOINTS.classes}/${encodeURIComponent(id)}`, {
+        method: "DELETE",
+      });
+      return true;
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 404) return false;
+      throw error;
+    }
   },
 
   async assignTeacher(
     classId: string,
-    teacher: SchoolClass["homeroomTeacher"],
+    teacher: SchoolClass["homeroomTeacher"] | null,
   ): Promise<SchoolClass | null> {
-    return new Promise((resolve) => {
-      const idx = memoryClasses.findIndex(
-        (c) => c.id === classId || c.classCode === classId,
+    if (!/^\d+$/.test(classId)) return null;
+    try {
+      const item = await apiRequest<ClassApiResponse>(
+        `${API_ENDPOINTS.classes}/${encodeURIComponent(classId)}/homeroom-teacher`,
+        {
+          method: "PUT",
+          body: { teacherId: teacher?.id || null },
+        },
       );
-      if (idx !== -1) {
-        memoryClasses[idx] = {
-          ...memoryClasses[idx],
-          homeroomTeacher: teacher,
-        };
-        resolve(memoryClasses[idx]);
-      } else {
-        resolve(null);
-      }
-    });
+      return normalizeClass(item);
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 404) return null;
+      throw error;
+    }
   },
 
   async addStudent(
-    classId: string,
-    student: { fullName: string; studentCode: string; dateOfBirth: string },
+    _classId: string,
+    _student: { fullName: string; studentCode: string; dateOfBirth: string },
   ): Promise<SchoolClass | null> {
-    return new Promise((resolve) => {
-      const idx = memoryClasses.findIndex(
-        (c) => c.id === classId || c.classCode === classId,
-      );
-      if (idx !== -1) {
-        const target = memoryClasses[idx];
-        const updatedStudents = [
-          ...target.students,
-          {
-            id: `cs-${Date.now()}`,
-            ...student,
-          },
-        ];
-        memoryClasses[idx] = {
-          ...target,
-          students: updatedStudents,
-          currentStudents: Math.min(
-            target.maxStudents,
-            target.currentStudents + 1,
-          ),
-        };
-        resolve(memoryClasses[idx]);
-      } else {
-        resolve(null);
-      }
-    });
+    throw new Error(
+      "Backend hiện chưa có API thêm học sinh trực tiếp từ màn hình lớp. Hãy tạo học sinh ở mục Học sinh và chọn lớp tương ứng.",
+    );
   },
 
   async removeStudent(
-    classId: string,
-    studentId: string,
+    _classId: string,
+    _studentId: string,
   ): Promise<SchoolClass | null> {
-    return new Promise((resolve) => {
-      const idx = memoryClasses.findIndex(
-        (c) => c.id === classId || c.classCode === classId,
-      );
-      if (idx !== -1) {
-        const target = memoryClasses[idx];
-        const updatedStudents = target.students.filter(
-          (s) => s.id !== studentId && s.studentCode !== studentId,
-        );
-        memoryClasses[idx] = {
-          ...target,
-          students: updatedStudents,
-          currentStudents: Math.max(0, target.currentStudents - 1),
-        };
-        resolve(memoryClasses[idx]);
-      } else {
-        resolve(null);
-      }
-    });
+    throw new Error(
+      "Backend hiện chưa có API chuyển/xóa học sinh khỏi lớp từ màn hình lớp. Thao tác này chưa được hỗ trợ để tránh chỉ cập nhật dữ liệu giả trên giao diện.",
+    );
   },
 
   async updateLeaders(
     classId: string,
     leaders: ClassLeader[],
   ): Promise<SchoolClass | null> {
-    return new Promise((resolve) => {
-      const idx = memoryClasses.findIndex(
-        (c) => c.id === classId || c.classCode === classId,
+    if (!/^\d+$/.test(classId)) return null;
+    try {
+      const item = await apiRequest<ClassApiResponse>(
+        `${API_ENDPOINTS.classes}/${encodeURIComponent(classId)}/leaders`,
+        {
+          method: "PUT",
+          body: leaders.map(({ title, studentCode }) => ({ title, studentCode })),
+        },
       );
-      if (idx !== -1) {
-        memoryClasses[idx] = {
-          ...memoryClasses[idx],
-          leaders,
-        };
-        resolve(memoryClasses[idx]);
-      } else {
-        resolve(null);
-      }
-    });
+      return normalizeClass(item);
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 404) return null;
+      throw error;
+    }
   },
 };
