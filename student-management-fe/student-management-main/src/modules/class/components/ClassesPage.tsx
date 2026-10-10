@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Breadcrumb } from '@/components/layout/Breadcrumb';
 import { useClasses } from '@/modules/class/hooks/useClasses';
+import { classService } from '@/modules/class/services/class.service';
 import { SchoolClass } from '@/modules/class/types';
 import { ClassTable } from '@/modules/class/components/ClassTable';
 import { ClassDetail } from '@/modules/class/components/ClassDetail';
@@ -28,6 +29,16 @@ export default function ClassesPage() {
   const uniqueRooms = new Set(classes.map((item) => item.room.trim()).filter(Boolean)).size;
 
   useEffect(() => { setCurrentPage(1); }, [filters]);
+
+  const handleOpenManage = async (item: SchoolClass) => {
+    try {
+      const detail = await classService.getClass(item.id);
+      setManagingClass(detail ?? item);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Không thể tải chi tiết lớp học.');
+      setManagingClass(item);
+    }
+  };
 
   const handleUpdateTeacher = async (classId: string, teacher: SchoolClass['homeroomTeacher'] | null) => {
     try {
@@ -98,7 +109,7 @@ export default function ClassesPage() {
       </div>
 
       <div className="flex flex-col">
-        <ClassTable classes={pageClasses} isLoading={isLoading} onOpenManage={(cls) => setManagingClass(cls)} />
+        <ClassTable classes={pageClasses} isLoading={isLoading} onOpenManage={(cls) => void handleOpenManage(cls)} />
         <Pagination currentPage={Math.min(currentPage, totalPages)} totalPages={totalPages} totalItems={totalItems} pageSize={pageSize} onPageChange={setCurrentPage} itemLabel="lớp học" />
       </div>
 
