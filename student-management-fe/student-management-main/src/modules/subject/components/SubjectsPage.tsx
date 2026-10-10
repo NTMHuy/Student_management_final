@@ -71,18 +71,23 @@ export default function SubjectsPage({ initialEditingId }: SubjectsPageProps) {
   }, [initialEditingId, isLoading, router, subjects]);
 
   const handleFormSubmit = async (data: SubjectFormData) => {
-    if (editingSubject) {
-      const updated = await updateSubject(editingSubject.id, data);
-      if (!updated) {
-        showToast('Không tìm thấy môn học cần cập nhật.');
+    try {
+      if (editingSubject) {
+        const updated = await updateSubject(editingSubject.id, data);
+        if (!updated) {
+          showToast('Không tìm thấy môn học cần cập nhật.');
+          return;
+        }
+        showToast('Đã cập nhật cấu hình môn học thành công.');
         return;
       }
-      showToast('Đã cập nhật cấu hình môn học thành công.');
-      return;
-    }
 
-    await createSubject(data);
-    showToast('Đã lưu cấu hình môn học thành công.');
+      await createSubject(data);
+      showToast('Đã lưu cấu hình môn học thành công.');
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Không thể lưu môn học. Vui lòng kiểm tra dữ liệu và thử lại.');
+      throw err;
+    }
   };
 
   const handleModalClose = () => {
