@@ -47,7 +47,7 @@ export default function AttendancePage() {
   const handleSave = async () => {
     await saveDaily();
     showToast(
-      `Đã lưu kết quả điểm danh lớp ${dailyFilters.className.toUpperCase()} ngày ${dailyFilters.date}. Hệ thống đã gửi SMS cho phụ huynh học sinh vắng mặt.`
+      `Đã cập nhật điểm danh lớp ${dailyFilters.className.toUpperCase()} ngày ${dailyFilters.date} vào cơ sở dữ liệu.`
     );
   };
 
