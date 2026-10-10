@@ -1,123 +1,84 @@
+import { apiRequest, ApiError } from "@/lib/api/client";
+import { API_ENDPOINTS } from "@/lib/api/endpoints";
 import { Teacher, TeacherFiltersState, TeacherFormData } from "../types";
-import { initialTeachers } from "../mocks/teacher.mock";
 
-let memoryTeachers = [...initialTeachers];
+interface TeacherApiResponse extends Teacher {
+  gender?: "male" | "female";
+  dateOfBirth?: string;
+}
+
+function toQueryString(filters?: Partial<TeacherFiltersState>): string {
+  const params = new URLSearchParams();
+  if (filters?.search?.trim()) params.set("search", filters.search.trim());
+  if (filters?.department) params.set("department", filters.department);
+  if (filters?.status) params.set("status", filters.status);
+  if (filters?.degree) params.set("degree", filters.degree);
+  const query = params.toString();
+  return query ? `?${query}` : "";
+}
 
 export const teacherService = {
-  async getTeachers(
-    filters?: Partial<TeacherFiltersState>,
-  ): Promise<Teacher[]> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        let result = [...memoryTeachers];
-
-        if (filters?.search) {
-          const q = filters.search.toLowerCase().trim();
-          result = result.filter(
-            (t) =>
-              t.teacherCode.toLowerCase().includes(q) ||
-              t.fullName.toLowerCase().includes(q) ||
-              t.email.toLowerCase().includes(q) ||
-              t.phone.includes(q) ||
-              t.titleRole.toLowerCase().includes(q),
-          );
-        }
-
-        if (filters?.department) {
-          result = result.filter((t) =>
-            t.department
-              .toLowerCase()
-              .includes(filters.department!.toLowerCase()),
-          );
-        }
-
-        if (filters?.status) {
-          result = result.filter((t) => t.status === filters.status);
-        }
-
-        if (filters?.degree) {
-          result = result.filter((t) =>
-            t.degree?.toLowerCase().includes(filters.degree!.toLowerCase()),
-          );
-        }
-
-        resolve(result);
-      }, 200);
-    });
+  async getTeachers(filters?: Partial<TeacherFiltersState>): Promise<Teacher[]> {
+    return apiRequest<Teacher[]>(`${API_ENDPOINTS.teachers}${toQueryString(filters)}`);
   },
 
   async getTeacher(id: string): Promise<Teacher | null> {
-    return new Promise((resolve) => {
-      const found = memoryTeachers.find((t) => t.id === id);
-      resolve(found || null);
+    try {
+      return await apiRequest<TeacherApiResponse>(
+        `${API_ENDPOINTS.teachers}/${encodeURIComponent(id)}`,
+      );
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 404) return null;
+      throw error;
+    }
+  },
+
+  createTeacher(data: TeacherFormData): Promise<Teacher> {
+    return apiRequest<Teacher>(API_ENDPOINTS.teachers, {
+      method: "POST",
+      body: { ...data, status: "active" },
     });
   },
 
-  async createTeacher(data: TeacherFormData): Promise<Teacher> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const nextCodeNum = 1001 + memoryTeachers.length;
-        const initials =
-          data.fullName
-            .split(" ")
-            .filter(Boolean)
-            .slice(-2)
-            .map((n) => n[0].toUpperCase())
-            .join("") || "GV";
+  async updateTeacher(id: string, data: Partial<TeacherFormData>): Promise<Teacher | null> {
+    const current = await this.getTeacher(id);
+    if (!current) return null;
 
-        const newTeacher: Teacher = {
-          id: `t-${Date.now()}`,
-          teacherCode: `GV-${nextCodeNum}`,
-          fullName: data.fullName,
-          titleRole: data.titleRole || "Giáo viên bộ môn",
-          department: data.department || "Toán - Tin học",
-          subjectTaught: data.subjectTaught || "Toán học",
-          email: data.email || "giaovien@edumanage.edu.vn",
-          phone: data.phone || "0912 345 678",
-          status: "active",
-          avatarInitials: initials,
-          degree: data.degree || "Cử nhân Sư phạm",
-          notes: data.notes || "",
-        };
+    const currentWithForm = current as TeacherApiResponse;
+    const updated: TeacherFormData & { status: string } = {
+      fullName: data.fullName ?? current.fullName,
+      gender: data.gender ?? currentWithForm.gender ?? "male",
+      dateOfBirth: data.dateOfBirth ?? currentWithForm.dateOfBirth ?? "",
+      phone: data.phone ?? current.phone,
+      email: data.email ?? current.email,
+      department: data.department ?? current.department,
+      degree: data.degree ?? current.degree ?? "",
+      titleRole: data.titleRole ?? current.titleRole,
+      subjectTaught: data.subjectTaught ?? current.subjectTaught,
+      notes: data.notes ?? current.notes ?? "",
+      status: current.status,
+    };
 
-        memoryTeachers = [newTeacher, ...memoryTeachers];
-        resolve(newTeacher);
-      }, 300);
-    });
-  },
-
-  async updateTeacher(
-    id: string,
-    data: Partial<TeacherFormData>,
-  ): Promise<Teacher | null> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const index = memoryTeachers.findIndex((t) => t.id === id);
-        if (index === -1) {
-          resolve(null);
-          return;
-        }
-
-        const existing = memoryTeachers[index];
-        const updated: Teacher = {
-          ...existing,
-          ...data,
-        };
-
-        memoryTeachers[index] = updated;
-        resolve(updated);
-      }, 300);
-    });
+    try {
+      return await apiRequest<Teacher>(
+        `${API_ENDPOINTS.teachers}/${encodeURIComponent(id)}`,
+        { method: "PUT", body: updated },
+      );
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 404) return null;
+      throw error;
+    }
   },
 
   async deleteTeacher(id: string): Promise<boolean> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        memoryTeachers = memoryTeachers.filter(
-          (t) => t.id !== id && t.teacherCode !== id,
-        );
-        resolve(true);
-      }, 250);
-    });
+    try {
+      await apiRequest<void>(`${API_ENDPOINTS.teachers}/${encodeURIComponent(id)}`, {
+        method: "DELETE",
+      });
+      return true;
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 404) return false;
+      throw error;
+    }
   },
 };

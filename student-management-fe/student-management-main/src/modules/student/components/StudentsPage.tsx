@@ -26,6 +26,7 @@ export default function StudentsPage() {
   const {
     students,
     isLoading,
+    error,
     filters,
     updateFilters,
     resetFilters,
@@ -40,13 +41,20 @@ export default function StudentsPage() {
   const [viewingStudent, setViewingStudent] = useState<Student | null>(null);
   const [deletingStudent, setDeletingStudent] = useState<Student | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [toastMessage, setToastMessage] = useState<string | null>('Thông tin hồ sơ học sinh đã được đồng bộ hệ thống.');
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
-  const totalItems = 1420;
-  const totalPages = Math.ceil(totalItems / pageSize);
+  const totalItems = students.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const pageStudents = students.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const activeStudents = students.filter((student) => student.status === 'active').length;
+  const suspendedStudents = students.filter((student) => student.status === 'suspended').length;
+  const transferredStudents = students.filter((student) => student.status === 'transferred').length;
+  const activePercent = totalItems ? (activeStudents / totalItems * 100).toFixed(1) : '0.0';
+
+  React.useEffect(() => { setCurrentPage(1); }, [filters]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -109,14 +117,14 @@ export default function StudentsPage() {
                 HỌC SINH VÀ ĐÀO TẠO
               </span>
               <span className="w-1 h-1 rounded-full bg-outline" />
-              <span>Học kỳ II (2024-2025)</span>
+              <span>Dữ liệu hiện tại từ máy chủ</span>
             </div>
             <div className="flex items-baseline gap-3 flex-wrap">
               <h1 className="text-2xl sm:text-3xl font-bold text-primary tracking-tight">
                 Quản lý Học sinh
               </h1>
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-surface-container-high text-primary font-semibold text-xs">
-                Tổng số: 1,420 học sinh
+                Tổng số: {students.length.toLocaleString('vi-VN')} học sinh theo bộ lọc
               </span>
             </div>
             <p className="text-xs sm:text-sm text-on-surface-variant max-w-2xl leading-relaxed">
@@ -156,6 +164,8 @@ export default function StudentsPage() {
           </div>
         </div>
 
+        {error && <p role="alert" className="rounded-xl bg-error/10 px-4 py-3 text-sm text-error">{error}</p>}
+
         {/* KPI Overview Micro-Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
           {/* Card 1 */}
@@ -164,9 +174,9 @@ export default function StudentsPage() {
               <span className="text-[11px] font-semibold uppercase tracking-wider text-outline">
                 Đang theo học
               </span>
-              <span className="text-2xl font-bold text-on-surface mt-1 font-mono">1,385</span>
+              <span className="text-2xl font-bold text-on-surface mt-1 font-mono">{activeStudents.toLocaleString('vi-VN')}</span>
               <span className="text-[11px] text-secondary flex items-center gap-1 mt-0.5 font-semibold">
-                <ArrowUp className="w-3 h-3" /> 97.5% tổng khóa
+                <ArrowUp className="w-3 h-3" /> {activePercent}% trong danh sách hiện tại
               </span>
             </div>
             <div className="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center text-primary">
@@ -180,7 +190,7 @@ export default function StudentsPage() {
               <span className="text-[11px] font-semibold uppercase tracking-wider text-outline">
                 Bảo lưu kết quả
               </span>
-              <span className="text-2xl font-bold text-on-surface mt-1 font-mono">24</span>
+              <span className="text-2xl font-bold text-on-surface mt-1 font-mono">{suspendedStudents.toLocaleString('vi-VN')}</span>
               <span className="text-[11px] text-on-surface-variant flex items-center gap-1 mt-0.5">
                 Tạm hoãn 1 học kỳ
               </span>
@@ -196,7 +206,7 @@ export default function StudentsPage() {
               <span className="text-[11px] font-semibold uppercase tracking-wider text-outline">
                 Chuyển trường / Thôi học
               </span>
-              <span className="text-2xl font-bold text-on-surface mt-1 font-mono">11</span>
+              <span className="text-2xl font-bold text-on-surface mt-1 font-mono">{transferredStudents.toLocaleString('vi-VN')}</span>
               <span className="text-[11px] text-error flex items-center gap-1 mt-0.5 font-semibold">
                 -0.8% so với kỳ trước
               </span>
@@ -233,7 +243,7 @@ export default function StudentsPage() {
         {/* Primary Tabular Ledger */}
         <div className="flex flex-col">
           <StudentTable
-            students={students}
+            students={pageStudents}
             isLoading={isLoading}
             onView={(student) => setViewingStudent(student)}
             onEdit={(student) => {

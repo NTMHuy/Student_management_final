@@ -1,27 +1,32 @@
-import { LoginCredentials, AuthSession } from "../types";
-import { defaultAccounts } from "../mocks/auth.mock";
+import { apiRequest } from "@/lib/api/client";
+import { API_ENDPOINTS } from "@/lib/api/endpoints";
+import { LoginCredentials } from "../types";
+
+export interface AuthUser {
+  id: string;
+  name: string;
+  email: string;
+  role: "admin" | "teacher";
+  title: string;
+  avatarText: string;
+}
 
 export const authService = {
-  async login(credentials: LoginCredentials): Promise<AuthSession> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const account = defaultAccounts[credentials.role];
-        resolve({
-          token: `fake-jwt-token-${Date.now()}`,
-          expiresAt: new Date(Date.now() + 86400000).toISOString(),
-          user: {
-            id: `usr-${credentials.role}-01`,
-            name: account.name,
-            email: credentials.username || account.email,
-            role: credentials.role,
-            title: account.title,
-          },
-        });
-      }, 500);
+  async login(credentials: LoginCredentials): Promise<AuthUser> {
+    return apiRequest<AuthUser>(API_ENDPOINTS.auth.login, {
+      method: "POST",
+      body: {
+        email: credentials.username.trim(),
+        password: credentials.password ?? "",
+      },
     });
   },
 
+  async me(): Promise<AuthUser> {
+    return apiRequest<AuthUser>(API_ENDPOINTS.auth.me);
+  },
+
   async logout(): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, 200));
+    await apiRequest<void>(API_ENDPOINTS.auth.logout, { method: "POST" });
   },
 };

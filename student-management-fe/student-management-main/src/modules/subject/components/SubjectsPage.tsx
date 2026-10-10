@@ -28,6 +28,7 @@ export default function SubjectsPage({ initialEditingId }: SubjectsPageProps) {
   const {
     subjects,
     isLoading,
+    error,
     filters,
     updateFilters,
     resetFilters,
@@ -42,8 +43,14 @@ export default function SubjectsPage({ initialEditingId }: SubjectsPageProps) {
 
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 8;
-  const totalItems = 14;
-  const totalPages = Math.ceil(totalItems / pageSize);
+  const totalItems = subjects.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const pageSubjects = subjects.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const scoreSubjects = subjects.filter((subject) => subject.evaluationType === 'score').length;
+  const evaluationSubjects = subjects.filter((subject) => subject.evaluationType === 'evaluation').length;
+  const totalPeriods = subjects.reduce((sum, subject) => sum + subject.periodsByGrade.grade10 + subject.periodsByGrade.grade11 + subject.periodsByGrade.grade12, 0);
+
+  React.useEffect(() => { setCurrentPage(1); }, [filters]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -67,18 +74,23 @@ export default function SubjectsPage({ initialEditingId }: SubjectsPageProps) {
   }, [initialEditingId, isLoading, router, subjects]);
 
   const handleFormSubmit = async (data: SubjectFormData) => {
-    if (editingSubject) {
-      const updated = await updateSubject(editingSubject.id, data);
-      if (!updated) {
-        showToast('Không tìm thấy môn học cần cập nhật.');
+    try {
+      if (editingSubject) {
+        const updated = await updateSubject(editingSubject.id, data);
+        if (!updated) {
+          showToast('Không tìm thấy môn học cần cập nhật.');
+          return;
+        }
+        showToast('Đã cập nhật cấu hình môn học thành công.');
         return;
       }
-      showToast('Đã cập nhật cấu hình môn học thành công.');
-      return;
-    }
 
-    await createSubject(data);
-    showToast('Đã lưu cấu hình môn học thành công.');
+      await createSubject(data);
+      showToast('Đã lưu cấu hình môn học thành công.');
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Không thể lưu môn học. Vui lòng kiểm tra dữ liệu và thử lại.');
+      throw err;
+    }
   };
 
   const handleModalClose = () => {
@@ -88,9 +100,12 @@ export default function SubjectsPage({ initialEditingId }: SubjectsPageProps) {
   };
 
   const handleDelete = async (sub: Subject) => {
-    if (confirm(`Bạn có chắc chắn muốn xóa môn ${sub.name} (${sub.subjectCode})?`)) {
-      await deleteSubject(sub.id);
-      showToast(`Đã xóa môn ${sub.name}.`);
+    if (!confirm(`Bạn có chắc chắn muốn xóa môn ${sub.name} (${sub.subjectCode})?`)) return;
+    try {
+      const deleted = await deleteSubject(sub.id);
+      showToast(deleted ? `Đã xóa môn ${sub.name}.` : 'Không tìm thấy môn học cần xóa.');
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Không thể xóa môn học.');
     }
   };
 
@@ -128,7 +143,7 @@ export default function SubjectsPage({ initialEditingId }: SubjectsPageProps) {
                   Quản lý Môn học
                 </h1>
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-surface-container text-primary">
-                  Tổng số: 14 môn học
+                  {subjects.length} môn theo bộ lọc
                 </span>
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-surface-container-high text-secondary">
                   <span className="w-1.5 h-1.5 rounded-full bg-secondary" />
@@ -165,6 +180,8 @@ export default function SubjectsPage({ initialEditingId }: SubjectsPageProps) {
           </div>
         </div>
 
+        {error && <p role="alert" className="rounded-xl bg-error/10 px-4 py-3 text-sm text-error">{error}</p>}
+
         {/* 4 KPI Metrics Widgets */}
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
           {/* Card 1 */}
@@ -172,10 +189,10 @@ export default function SubjectsPage({ initialEditingId }: SubjectsPageProps) {
             <div className="flex items-start justify-between">
               <div>
                 <span className="text-xs font-medium text-on-surface-variant block">
-                  Tổng số môn học
+                  Số môn theo bộ lọc
                 </span>
                 <div className="flex items-baseline gap-2 mt-1">
-                  <span className="text-3xl font-bold text-on-surface tracking-tight font-mono">14</span>
+                  <span className="text-3xl font-bold text-on-surface tracking-tight font-mono">{subjects.length}</span>
                   <span className="text-xs text-outline font-mono">môn</span>
                 </div>
               </div>
@@ -184,8 +201,7 @@ export default function SubjectsPage({ initialEditingId }: SubjectsPageProps) {
               </div>
             </div>
             <div className="mt-4 pt-2 border-t border-outline-variant/10 text-xs text-on-surface-variant">
-              <span className="font-semibold text-primary">10</span> bắt buộc •{' '}
-              <span className="font-semibold text-secondary">4</span> chuyên đề lựa chọn
+              <span className="font-semibold text-primary">{subjects.length}</span> môn trong danh sách hiện tại
             </div>
           </div>
 
@@ -197,7 +213,7 @@ export default function SubjectsPage({ initialEditingId }: SubjectsPageProps) {
                   Đánh giá bằng điểm số
                 </span>
                 <div className="flex items-baseline gap-2 mt-1">
-                  <span className="text-3xl font-bold text-on-surface tracking-tight font-mono">11</span>
+                  <span className="text-3xl font-bold text-on-surface tracking-tight font-mono">{scoreSubjects}</span>
                   <span className="text-xs text-outline font-mono">môn</span>
                 </div>
               </div>
@@ -219,7 +235,7 @@ export default function SubjectsPage({ initialEditingId }: SubjectsPageProps) {
                   Đánh giá bằng nhận xét
                 </span>
                 <div className="flex items-baseline gap-2 mt-1">
-                  <span className="text-3xl font-bold text-on-surface tracking-tight font-mono">03</span>
+                  <span className="text-3xl font-bold text-on-surface tracking-tight font-mono">{evaluationSubjects.toString().padStart(2, '0')}</span>
                   <span className="text-xs text-outline font-mono">môn</span>
                 </div>
               </div>
@@ -241,7 +257,7 @@ export default function SubjectsPage({ initialEditingId }: SubjectsPageProps) {
                   Tổng số tiết / tuần
                 </span>
                 <div className="flex items-baseline gap-2 mt-1">
-                  <span className="text-3xl font-bold text-on-surface tracking-tight font-mono">315</span>
+                  <span className="text-3xl font-bold text-on-surface tracking-tight font-mono">{totalPeriods.toLocaleString('vi-VN')}</span>
                   <span className="text-xs text-outline font-mono">tiết/trường</span>
                 </div>
               </div>
@@ -266,7 +282,7 @@ export default function SubjectsPage({ initialEditingId }: SubjectsPageProps) {
         {/* Subject Table & Pagination */}
         <div className="flex flex-col">
           <SubjectTable
-            subjects={subjects}
+            subjects={pageSubjects}
             isLoading={isLoading}
             onView={(s) => {
               setEditingSubject(s);

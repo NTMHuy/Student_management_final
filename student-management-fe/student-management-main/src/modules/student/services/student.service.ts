@@ -1,121 +1,79 @@
+import { apiRequest, ApiError } from "@/lib/api/client";
+import { API_ENDPOINTS } from "@/lib/api/endpoints";
 import { Student, StudentFiltersState, StudentFormData } from "../types";
-import { initialStudents } from "../mocks/student.mock";
 
-let memoryStudents = [...initialStudents];
+function toQueryString(filters?: Partial<StudentFiltersState>): string {
+  const params = new URLSearchParams();
+  if (filters?.search?.trim()) params.set("search", filters.search.trim());
+  if (filters?.gradeLevel) params.set("gradeLevel", filters.gradeLevel);
+  if (filters?.className) params.set("className", filters.className);
+  if (filters?.status) params.set("status", filters.status);
+  const query = params.toString();
+  return query ? `?${query}` : "";
+}
 
 export const studentService = {
-  async getStudents(
-    filters?: Partial<StudentFiltersState>,
-  ): Promise<Student[]> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        let result = [...memoryStudents];
-
-        if (filters?.search) {
-          const q = filters.search.toLowerCase().trim();
-          result = result.filter(
-            (s) =>
-              s.studentCode.toLowerCase().includes(q) ||
-              s.fullName.toLowerCase().includes(q) ||
-              s.parentEmail.toLowerCase().includes(q) ||
-              s.phone.includes(q),
-          );
-        }
-
-        if (filters?.gradeLevel) {
-          result = result.filter(
-            (s) => s.gradeLevel.toString() === filters.gradeLevel,
-          );
-        }
-
-        if (filters?.className) {
-          result = result.filter((s) => s.className === filters.className);
-        }
-
-        if (filters?.status) {
-          result = result.filter((s) => s.status === filters.status);
-        }
-
-        resolve(result);
-      }, 200);
-    });
+  getStudents(filters?: Partial<StudentFiltersState>): Promise<Student[]> {
+    return apiRequest<Student[]>(`${API_ENDPOINTS.students}${toQueryString(filters)}`);
   },
 
   async getStudent(id: string): Promise<Student | null> {
-    return new Promise((resolve) => {
-      const found = memoryStudents.find((s) => s.id === id);
-      resolve(found || null);
+    try {
+      return await apiRequest<Student>(`${API_ENDPOINTS.students}/${encodeURIComponent(id)}`);
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 404) return null;
+      throw error;
+    }
+  },
+
+  createStudent(data: StudentFormData): Promise<Student> {
+    return apiRequest<Student>(API_ENDPOINTS.students, {
+      method: "POST",
+      body: {
+        ...data,
+        gradeLevel: Number(data.gradeLevel),
+        className: data.className.trim(),
+        status: "active",
+      },
     });
   },
 
-  async createStudent(data: StudentFormData): Promise<Student> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const nextCodeNum = 124 + memoryStudents.length;
-        const initials =
-          data.fullName
-            .split(" ")
-            .filter(Boolean)
-            .slice(-2)
-            .map((n) => n[0].toUpperCase())
-            .join("") || "HS";
+  async updateStudent(id: string, data: Partial<StudentFormData>): Promise<Student | null> {
+    const current = await this.getStudent(id);
+    if (!current) return null;
 
-        const newStudent: Student = {
-          id: `s-${Date.now()}`,
-          studentCode: `HS00${nextCodeNum}`,
-          fullName: data.fullName,
-          dateOfBirth: data.dateOfBirth,
-          gender: data.gender,
-          gradeLevel: Number(data.gradeLevel),
-          className: data.className || `${data.gradeLevel}A1`,
-          parentEmail: data.parentEmail || "phuhuynh@example.com",
-          phone: data.phone || "0912 345 678",
-          notes: data.notes || "",
-          status: "active",
-          avatarInitials: initials,
-        };
+    const updated = {
+      fullName: data.fullName ?? current.fullName,
+      dateOfBirth: data.dateOfBirth ?? current.dateOfBirth,
+      gender: data.gender ?? current.gender,
+      gradeLevel: Number(data.gradeLevel ?? current.gradeLevel),
+      className: (data.className ?? current.className).trim(),
+      parentEmail: data.parentEmail ?? current.parentEmail,
+      phone: data.phone ?? current.phone,
+      notes: data.notes ?? current.notes ?? "",
+      status: current.status,
+    };
 
-        memoryStudents = [newStudent, ...memoryStudents];
-        resolve(newStudent);
-      }, 300);
-    });
-  },
-
-  async updateStudent(
-    id: string,
-    data: Partial<StudentFormData>,
-  ): Promise<Student | null> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const index = memoryStudents.findIndex((s) => s.id === id);
-        if (index === -1) {
-          resolve(null);
-          return;
-        }
-
-        const existing = memoryStudents[index];
-        const updated: Student = {
-          ...existing,
-          ...data,
-          gradeLevel: data.gradeLevel
-            ? Number(data.gradeLevel)
-            : existing.gradeLevel,
-        };
-
-        memoryStudents[index] = updated;
-        resolve(updated);
-      }, 300);
-    });
+    try {
+      return await apiRequest<Student>(`${API_ENDPOINTS.students}/${encodeURIComponent(id)}`, {
+        method: "PUT",
+        body: updated,
+      });
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 404) return null;
+      throw error;
+    }
   },
 
   async deleteStudent(id: string): Promise<boolean> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        memoryStudents = memoryStudents.filter(
-          (s) => s.id !== id && s.studentCode !== id,
-        );
-        resolve(true);
-      }, 250);
-    });
+    try {
+      await apiRequest<void>(`${API_ENDPOINTS.students}/${encodeURIComponent(id)}`, {
+        method: "DELETE",
+      });
+      return true;
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 404) return false;
+      throw error;
+    }
   },
 };
