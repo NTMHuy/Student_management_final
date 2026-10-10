@@ -28,6 +28,7 @@ export default function SubjectsPage({ initialEditingId }: SubjectsPageProps) {
   const {
     subjects,
     isLoading,
+    error,
     filters,
     updateFilters,
     resetFilters,
@@ -178,6 +179,8 @@ export default function SubjectsPage({ initialEditingId }: SubjectsPageProps) {
             </div>
           </div>
         </div>
+
+        {error && <p role="alert" className="rounded-xl bg-error/10 px-4 py-3 text-sm text-error">{error}</p>}
 
         {/* 4 KPI Metrics Widgets */}
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
