@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { SchoolClass, ClassLeader, ClassStudentItem } from '../types';
 import { X, RefreshCw, UserCheck, UserMinus, UserPlus, Save } from 'lucide-react';
+import { teacherService } from '@/modules/teacher/services/teacher.service';
+import { Teacher } from '@/modules/teacher/types';
 
 interface ClassDetailProps {
   isOpen: boolean;
@@ -23,7 +25,20 @@ export const ClassDetail: React.FC<ClassDetailProps> = ({
   const [newStudentName, setNewStudentName] = useState('');
   const [newStudentDob, setNewStudentDob] = useState('2009-03-12');
   const [isChangingTeacher, setIsChangingTeacher] = useState(false);
-  const [teacherNameInput, setTeacherNameInput] = useState('');
+  const [selectedTeacherId, setSelectedTeacherId] = useState('');
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [isLoadingTeachers, setIsLoadingTeachers] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    let active = true;
+    setIsLoadingTeachers(true);
+    teacherService.getTeachers()
+      .then((items) => { if (active) setTeachers(items); })
+      .catch(() => { if (active) setTeachers([]); })
+      .finally(() => { if (active) setIsLoadingTeachers(false); });
+    return () => { active = false; };
+  }, [isOpen]);
 
   if (!isOpen || !schoolClass) return null;
 
@@ -42,20 +57,9 @@ export const ClassDetail: React.FC<ClassDetailProps> = ({
 
   const handleTeacherChangeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!teacherNameInput.trim()) return;
-    const initials = teacherNameInput
-      .split(' ')
-      .filter(Boolean)
-      .slice(-2)
-      .map((w) => w[0].toUpperCase())
-      .join('');
-    await onUpdateTeacher(schoolClass.id, {
-      ...schoolClass.homeroomTeacher,
-      fullName: teacherNameInput.trim(),
-      avatarInitials: initials || 'GV',
-    });
+    const teacher = teachers.find((item) => item.id === selectedTeacherId) ?? null;
+    await onUpdateTeacher(schoolClass.id, teacher);
     setIsChangingTeacher(false);
-    setTeacherNameInput('');
   };
 
   return (
@@ -103,7 +107,7 @@ export const ClassDetail: React.FC<ClassDetailProps> = ({
               <button
                 type="button"
                 onClick={() => {
-                  setTeacherNameInput(schoolClass.homeroomTeacher.fullName);
+                  setSelectedTeacherId(schoolClass.homeroomTeacher.id || '');
                   setIsChangingTeacher(!isChangingTeacher);
                 }}
                 className="text-xs font-semibold text-secondary hover:underline flex items-center gap-1 cursor-pointer"
@@ -115,18 +119,16 @@ export const ClassDetail: React.FC<ClassDetailProps> = ({
 
             {isChangingTeacher ? (
               <form onSubmit={handleTeacherChangeSubmit} className="flex gap-2">
-                <input
-                  type="text"
-                  required
-                  value={teacherNameInput}
-                  onChange={(e) => setTeacherNameInput(e.target.value)}
-                  placeholder="Nhập tên giáo viên chủ nhiệm mới..."
+                <select
+                  value={selectedTeacherId}
+                  onChange={(e) => setSelectedTeacherId(e.target.value)}
+                  disabled={isLoadingTeachers}
                   className="flex-1 px-3 py-2 bg-surface-container-lowest text-xs rounded-xl outline-none border border-secondary"
-                />
-                <button
-                  type="submit"
-                  className="px-3 py-2 bg-secondary text-on-secondary rounded-xl text-xs font-semibold cursor-pointer"
                 >
+                  <option value="">Chưa phân công</option>
+                  {teachers.map((teacher) => <option key={teacher.id} value={teacher.id}>{teacher.fullName} ({teacher.teacherCode})</option>)}
+                </select>
+                <button type="submit" disabled={isLoadingTeachers} className="px-3 py-2 bg-secondary text-on-secondary rounded-xl text-xs font-semibold disabled:opacity-50">
                   Lưu GV
                 </button>
               </form>
