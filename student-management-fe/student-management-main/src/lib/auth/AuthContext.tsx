@@ -83,7 +83,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // A client-side role switch must never grant a different server-side role.
   const switchRole = useCallback((_role: UserRole) => undefined, []);
 
-  const role = user?.role ?? 'admin';
+  const role = user?.role ?? 'teacher';
   const value = useMemo(() => ({
     user,
     role,
