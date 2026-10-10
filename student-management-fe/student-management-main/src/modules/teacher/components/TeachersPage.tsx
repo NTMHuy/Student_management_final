@@ -42,8 +42,15 @@ export default function TeachersPage() {
 
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 8;
-  const totalItems = 86;
-  const totalPages = Math.ceil(totalItems / pageSize);
+  const totalItems = teachers.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const pageTeachers = teachers.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const activeTeachers = teachers.filter((teacher) => teacher.status === 'active').length;
+  const leaveTeachers = teachers.filter((teacher) => teacher.status === 'leave').length;
+  const transferredTeachers = teachers.filter((teacher) => teacher.status === 'transferred').length;
+  const departmentCount = new Set(teachers.map((teacher) => teacher.department.trim()).filter(Boolean)).size;
+
+  React.useEffect(() => { setCurrentPage(1); }, [filters]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -114,7 +121,7 @@ export default function TeachersPage() {
                 </h1>
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-primary-fixed text-primary text-xs font-semibold">
                   <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                  Tổng số: 86 giáo viên
+                  Tổng số: {teachers.length} giáo viên theo bộ lọc
                 </span>
               </div>
               <p className="text-xs sm:text-sm text-on-surface-variant mt-1 max-w-2xl leading-relaxed">
@@ -158,12 +165,12 @@ export default function TeachersPage() {
               <School className="w-5 h-5 text-primary" />
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-bold text-on-surface font-mono">78</span>
+              <span className="text-3xl font-bold text-on-surface font-mono">{activeTeachers}</span>
               <span className="text-xs text-on-surface-variant">giáo viên</span>
             </div>
             <div className="flex items-center gap-1.5 mt-3 pt-2 border-t border-outline-variant/10 text-xs">
               <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-tertiary-fixed text-on-tertiary-fixed-variant font-bold text-[10px]">
-                90.7%
+                {totalItems ? (activeTeachers / totalItems * 100).toFixed(1) : '0.0'}%
               </span>
               <span className="text-on-surface-variant">Chiếm biên chế toàn trường</span>
             </div>
@@ -178,7 +185,7 @@ export default function TeachersPage() {
               <CalendarX className="w-5 h-5 text-error" />
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-bold text-on-surface font-mono">5</span>
+              <span className="text-3xl font-bold text-on-surface font-mono">{leaveTeachers}</span>
               <span className="text-xs text-on-surface-variant">giáo viên</span>
             </div>
             <div className="flex items-center gap-1.5 mt-3 pt-2 border-t border-outline-variant/10 text-xs">
@@ -193,19 +200,19 @@ export default function TeachersPage() {
           <div className="p-5 rounded-2xl bg-surface-container-lowest shadow-sm border border-outline-variant/20 flex flex-col justify-between relative overflow-hidden group">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">
-                Giáo viên chủ nhiệm
+                Đã chuyển công tác
               </span>
               <Users className="w-5 h-5 text-secondary" />
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-bold text-on-surface font-mono">38</span>
+              <span className="text-3xl font-bold text-on-surface font-mono">{transferredTeachers}</span>
               <span className="text-xs text-on-surface-variant">giáo viên</span>
             </div>
             <div className="flex items-center gap-1.5 mt-3 pt-2 border-t border-outline-variant/10 text-xs">
               <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed-variant font-bold text-[10px]">
                 100%
               </span>
-              <span className="text-on-surface-variant">Tất cả lớp học có GVCN</span>
+              <span className="text-on-surface-variant">Theo trạng thái dữ liệu backend</span>
             </div>
           </div>
 
@@ -218,7 +225,7 @@ export default function TeachersPage() {
               <Layers className="w-5 h-5 text-tertiary" />
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-bold text-on-surface font-mono">8</span>
+              <span className="text-3xl font-bold text-on-surface font-mono">{departmentCount}</span>
               <span className="text-xs text-on-surface-variant">tổ bộ môn</span>
             </div>
             <div className="flex items-center gap-1.5 mt-3 pt-2 border-t border-outline-variant/10 text-xs">
@@ -240,7 +247,7 @@ export default function TeachersPage() {
         {/* Table & Pagination */}
         <div className="flex flex-col">
           <TeacherTable
-            teachers={teachers}
+            teachers={pageTeachers}
             isLoading={isLoading}
             onView={(t) => setViewingTeacher(t)}
             onEdit={(t) => {
