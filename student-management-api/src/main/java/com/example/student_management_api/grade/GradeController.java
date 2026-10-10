@@ -121,7 +121,12 @@ public class GradeController {
             """, studentId, classId, subjectId, schoolYear, semester, assessmentType, assessmentNumber);
     }
 
-    private Integer nullableInt(java.sql.ResultSet rs, String column) throws java.sql.SQLException {\n        int value = rs.getInt(column);\n        return rs.wasNull() ? null : value;\n    }\n\n    private void requireClassSubjectAccess(Actor actor, Long classId, Long subjectId) {
+    private Integer nullableInt(java.sql.ResultSet rs, String column) throws java.sql.SQLException {
+        int value = rs.getInt(column);
+        return rs.wasNull() ? null : value;
+    }
+
+    private void requireClassSubjectAccess(Actor actor, Long classId, Long subjectId) {
         if (actor.isAdmin()) return;
         if (actor.teacherId() == null) throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Tài khoản chưa gắn hồ sơ giáo viên");
         Integer allowed = jdbc.queryForObject("""
