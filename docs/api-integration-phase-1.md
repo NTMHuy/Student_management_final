@@ -37,9 +37,11 @@ Do not commit real secrets or `.env.local`. In production, use HTTPS, set `COOKI
 - Frontend requests send credentials so the browser includes the backend's HttpOnly session cookie.
 - Backend CORS permits credentials only from the configured frontend origin.
 
+- Attendance (`/api/attendance`: per-class daily list, batch save, history, repeated-absence warnings) and grades (`/api/grades`: gradebook per class/subject/term, batch save) are persisted in PostgreSQL (migration V3). The class/subject pickers come from `/api/teaching-options`: admins see everything, teachers only their homeroom classes or assigned class/subject pairs (`/api/teaching-assignments`).
+- Account settings page (`/settings`) changes the password through `POST /api/account/password`.
+
 ## Important notes
 
 - The role selector on the login screen is a UI affordance; the server is authoritative for the account role. Client-side role switching does not grant permissions.
-- Grades and attendance currently have frontend endpoint constants, but the backend controllers were not found during this phase. Those screens must not be considered API-integrated yet.
 - Class management is still using mock data. Dashboard sections beyond the headline counts (attendance, academic distribution, sample class table, notices/reminders) are still static and must not be interpreted as live data.
 - Cross-origin production deployment needs cookie/CORS review. The current backend cookie uses SameSite=Lax; if frontend and API are on different sites, cookie policy and CSRF protection must be designed together rather than simply changing CORS.

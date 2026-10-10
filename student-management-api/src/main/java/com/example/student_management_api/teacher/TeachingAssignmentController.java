@@ -43,7 +43,7 @@ public class TeachingAssignmentController {
             JOIN teachers t ON t.id=tcs.teacher_id
             JOIN classes c ON c.id=tcs.class_id
             JOIN subjects s ON s.id=tcs.subject_id
-            WHERE (? IS NULL OR t.id=?)
+            WHERE (CAST(? AS BIGINT) IS NULL OR t.id=?)
             ORDER BY t.full_name,c.class_name,s.name
             """, (rs,n) -> new Assignment(rs.getLong("id"),rs.getLong("teacher_id"),
                 rs.getString("teacher_name"),rs.getLong("class_id"),rs.getString("class_name"),
