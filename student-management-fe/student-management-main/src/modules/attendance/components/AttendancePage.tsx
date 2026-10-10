@@ -153,11 +153,7 @@ export default function AttendancePage() {
                 className="px-3 py-2 bg-surface-container-low border border-outline-variant/30 rounded-xl text-xs sm:text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-secondary/40 font-medium"
               >
                 <option value="10a1">10A1 (Khối 10)</option>
-                <option value="10a2">10A2 (Khối 10)</option>
                 <option value="11b1">11B1 (Khối 11)</option>
-                <option value="11b2">11B2 (Khối 11)</option>
-                <option value="12c1">12C1 (Khối 12)</option>
-                <option value="12c2">12C2 (Khối 12)</option>
               </select>
             </div>
           </div>
