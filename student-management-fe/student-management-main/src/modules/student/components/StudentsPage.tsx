@@ -124,7 +124,7 @@ export default function StudentsPage() {
                 Quản lý Học sinh
               </h1>
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-surface-container-high text-primary font-semibold text-xs">
-                Tổng số: {students.length.toLocaleString('vi-VN')} học sinh
+                Tổng số: {students.length.toLocaleString('vi-VN')} học sinh theo bộ lọc
               </span>
             </div>
             <p className="text-xs sm:text-sm text-on-surface-variant max-w-2xl leading-relaxed">
