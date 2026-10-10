@@ -96,33 +96,25 @@ function toStudentRecords(rows: GradeApiRow[]): StudentGradeRecord[] {
   });
 }
 
+async function resolveFilters(filters?: Partial<GradeFiltersState>) {
+  const classId = await resolveClassId(filters?.className ?? "10A1");
+  const subjectId = await resolveSubjectId(filters?.subject ?? "math");
+  const { semester, schoolYear } = parseTerm(filters?.semester ?? "sem2-2023-2024");
+  return { classId, subjectId, semester, schoolYear };
+}
+
 export const gradeService = {
   async getGradeRecords(filters?: Partial<GradeFiltersState>): Promise<StudentGradeRecord[]> {
-    const classId = await resolveClassId(filters?.className ?? "10A1");
-    const subjectId = await resolveSubjectId(filters?.subject ?? "math");
-    const { semester, schoolYear } = parseTerm(filters?.semester ?? "sem2-2023-2024");
+    const { classId, subjectId, semester, schoolYear } = await resolveFilters(filters);
     const rows = await apiRequest<GradeApiRow[]>(
       `${API_ENDPOINTS.grades}?classId=${encodeURIComponent(classId)}&subjectId=${encodeURIComponent(subjectId)}&schoolYear=${encodeURIComponent(schoolYear)}&semester=${semester}`,
     );
-    const records = toStudentRecords(rows);
-    if (filters?.viewType === "tx") return records;
-    if (filters?.viewType === "exam") return records;
-    return records;
-  },
-
-  async updateGrade(id: string, field: GradeField, value: number | null): Promise<StudentGradeRecord | null> {
-    // The grade API currently accepts numeric scores only; null means "leave unchanged".
-    if (value === null) return null;
-    const record = this._pendingRecords?.find((item) => item.id === id);
-    if (!record) return null;
-    return { ...record, [field]: value };
+    return toStudentRecords(rows);
   },
 
   async saveAllGrades(records: StudentGradeRecord[], filters?: Partial<GradeFiltersState>): Promise<boolean> {
-    const classId = await resolveClassId(filters?.className ?? "10A1");
-    const subjectId = await resolveSubjectId(filters?.subject ?? "math");
-    const { semester, schoolYear } = parseTerm(filters?.semester ?? "sem2-2023-2024");
-    const updates = records.flatMap((record) =>
+    const { classId, subjectId, semester, schoolYear } = await resolveFilters(filters);
+    const requests = records.flatMap((record) =>
       (Object.keys(FIELD_TO_ASSESSMENT) as GradeField[])
         .filter((field) => record[field] !== null)
         .map((field) => apiRequest<GradeApiRow>(API_ENDPOINTS.grades, {
@@ -139,7 +131,7 @@ export const gradeService = {
           },
         })),
     );
-    await Promise.all(updates);
+    await Promise.all(requests);
     return true;
   },
 };
