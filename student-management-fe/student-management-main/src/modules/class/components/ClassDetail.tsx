@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { SchoolClass, ClassLeader, ClassStudentItem } from '../types';
-import { X, RefreshCw, UserCheck, UserMinus, UserPlus, Save } from 'lucide-react';
+import { X, RefreshCw, UserCheck } from 'lucide-react';
 import { teacherService } from '@/modules/teacher/services/teacher.service';
 import { Teacher } from '@/modules/teacher/types';
 
@@ -9,21 +9,14 @@ interface ClassDetailProps {
   onClose: () => void;
   schoolClass: SchoolClass | null;
   onUpdateTeacher: (classId: string, teacher: SchoolClass['homeroomTeacher'] | null) => Promise<void>;
-  onAddStudent: (classId: string, student: { fullName: string; studentCode: string; dateOfBirth: string }) => Promise<void>;
-  onRemoveStudent: (classId: string, studentId: string) => Promise<void>;
-}
+ }
 
 export const ClassDetail: React.FC<ClassDetailProps> = ({
   isOpen,
   onClose,
   schoolClass,
   onUpdateTeacher,
-  onAddStudent,
-  onRemoveStudent,
-}) => {
-  const [showAddStudentForm, setShowAddStudentForm] = useState(false);
-  const [newStudentName, setNewStudentName] = useState('');
-  const [newStudentDob, setNewStudentDob] = useState('2009-03-12');
+ }) => {
   const [isChangingTeacher, setIsChangingTeacher] = useState(false);
   const [selectedTeacherId, setSelectedTeacherId] = useState('');
   const [teachers, setTeachers] = useState<Teacher[]>([]);
@@ -41,19 +34,6 @@ export const ClassDetail: React.FC<ClassDetailProps> = ({
   }, [isOpen]);
 
   if (!isOpen || !schoolClass) return null;
-
-  const handleAddStudentSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newStudentName.trim()) return;
-    const code = `2024-${1000 + (schoolClass.students.length + 1)}`;
-    await onAddStudent(schoolClass.id, {
-      fullName: newStudentName.trim(),
-      studentCode: code,
-      dateOfBirth: newStudentDob.split('-').reverse().join('/'),
-    });
-    setNewStudentName('');
-    setShowAddStudentForm(false);
-  };
 
   const handleTeacherChangeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -156,13 +136,7 @@ export const ClassDetail: React.FC<ClassDetailProps> = ({
           <div className="flex flex-col gap-2.5">
             <div className="flex items-center justify-between">
               <span className="text-sm font-bold text-on-surface">Ban Cán Sự Lớp</span>
-              <button
-                type="button"
-                onClick={() => alert('Chức năng bổ nhiệm cán sự lớp đã sẵn sàng.')}
-                className="text-xs text-primary hover:underline font-medium cursor-pointer"
-              >
-                + Bổ nhiệm mới
-              </button>
+              <span className="text-xs text-on-surface-variant">Dữ liệu từ máy chủ</span>
             </div>
 
             <div className="grid grid-cols-3 gap-2">
@@ -187,124 +161,29 @@ export const ClassDetail: React.FC<ClassDetailProps> = ({
 
           {/* Section C: Students in Class */}
           <div className="flex flex-col gap-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <span className="text-sm font-bold text-on-surface">
-                  Danh sách học sinh ({schoolClass.currentStudents})
-                </span>
-                <span className="text-xs text-on-surface-variant block">
-                  Chỉ tiêu tối đa: {schoolClass.maxStudents} học sinh
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowAddStudentForm(!showAddStudentForm)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary-fixed text-primary text-xs font-semibold hover:bg-primary hover:text-on-primary transition-all cursor-pointer"
-              >
-                <UserPlus className="w-3.5 h-3.5" />
-                <span>+ Thêm học sinh</span>
-              </button>
+            <div>
+              <span className="text-sm font-bold text-on-surface">Danh sách học sinh ({schoolClass.currentStudents})</span>
+              <span className="text-xs text-on-surface-variant block">Sĩ số tối đa: {schoolClass.maxStudents} học sinh</span>
             </div>
-
-            {showAddStudentForm && (
-              <form
-                onSubmit={handleAddStudentSubmit}
-                className="p-3 bg-surface-container-low rounded-xl flex flex-col gap-2 border border-secondary/30"
-              >
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    required
-                    value={newStudentName}
-                    onChange={(e) => setNewStudentName(e.target.value)}
-                    placeholder="Họ và tên học sinh mới..."
-                    className="flex-1 px-3 py-1.5 bg-surface-container-lowest rounded-lg text-xs outline-none"
-                  />
-                  <input
-                    type="date"
-                    required
-                    value={newStudentDob}
-                    onChange={(e) => setNewStudentDob(e.target.value)}
-                    className="px-2 py-1.5 bg-surface-container-lowest rounded-lg text-xs outline-none"
-                  />
-                </div>
-                <div className="flex justify-end gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowAddStudentForm(false)}
-                    className="px-3 py-1 rounded bg-surface-container text-xs cursor-pointer"
-                  >
-                    Hủy
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-3 py-1 rounded bg-primary text-on-primary text-xs font-semibold cursor-pointer"
-                  >
-                    Thêm vào lớp
-                  </button>
-                </div>
-              </form>
-            )}
-
-            {/* Students List */}
+            <p className="text-xs text-on-surface-variant rounded-xl bg-surface-container-low p-3">
+              Để thêm học sinh hoặc chuyển học sinh sang lớp khác, hãy thao tác tại mục Học sinh. Backend hiện chưa cung cấp API thay đổi học sinh trực tiếp trong màn hình lớp.
+            </p>
             <div className="flex flex-col divide-y divide-outline-variant/15 rounded-xl overflow-hidden bg-surface-container-lowest border border-outline-variant/20 shadow-sm">
-              {schoolClass.students.map((st, idx) => (
-                <div
-                  key={st.id || idx}
-                  className="p-3 flex items-center justify-between hover:bg-surface-container-low/50 transition-colors"
-                >
+              {schoolClass.students.length === 0 ? <p className="p-4 text-xs text-on-surface-variant">Chưa có học sinh trong danh sách chi tiết của lớp.</p> : schoolClass.students.map((st, idx) => (
+                <div key={st.id || idx} className="p-3 flex items-center justify-between hover:bg-surface-container-low/50 transition-colors">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-surface-container text-on-surface-variant flex items-center justify-center text-xs font-semibold">
-                      {(idx + 1).toString().padStart(2, '0')}
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-xs sm:text-sm font-semibold text-on-surface">
-                        {st.fullName}
-                      </span>
-                      <span className="text-[11px] text-on-surface-variant font-mono">
-                        Mã HS: {st.studentCode} • {st.dateOfBirth}
-                      </span>
-                    </div>
+                    <div className="w-8 h-8 rounded-full bg-surface-container text-on-surface-variant flex items-center justify-center text-xs font-semibold">{(idx + 1).toString().padStart(2, '0')}</div>
+                    <div className="flex flex-col"><span className="text-xs sm:text-sm font-semibold text-on-surface">{st.fullName}</span><span className="text-[11px] text-on-surface-variant font-mono">Mã HS: {st.studentCode} • {st.dateOfBirth}</span></div>
                   </div>
-
-                  <div className="flex items-center gap-2">
-                    {st.roleInClass && (
-                      <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-tertiary-fixed text-tertiary">
-                        {st.roleInClass}
-                      </span>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => onRemoveStudent(schoolClass.id, st.id)}
-                      className="p-1 rounded text-outline hover:text-error hover:bg-error-container/20 transition-colors cursor-pointer"
-                      title="Gỡ khỏi lớp"
-                    >
-                      <UserMinus className="w-4 h-4" />
-                    </button>
-                  </div>
+                  {st.roleInClass && <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-tertiary-fixed text-tertiary">{st.roleInClass}</span>}
                 </div>
               ))}
             </div>
           </div>
         </div>
 
-        {/* Drawer Footer Actions */}
-        <div className="p-4 px-6 bg-surface-container-low border-t border-outline-variant/20 flex items-center justify-end gap-3">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-5 py-2 rounded-xl bg-surface-container text-on-surface text-xs font-semibold hover:bg-surface-container-high transition-all cursor-pointer"
-          >
-            Đóng
-          </button>
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-6 py-2 rounded-xl bg-primary text-on-primary text-xs font-semibold hover:bg-primary-container transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
-          >
-            <Save className="w-4 h-4" />
-            <span>Lưu thay đổi</span>
-          </button>
+        <div className="p-4 px-6 bg-surface-container-low border-t border-outline-variant/20 flex items-center justify-end">
+          <button type="button" onClick={onClose} className="px-5 py-2 rounded-xl bg-surface-container text-on-surface text-xs font-semibold hover:bg-surface-container-high transition-all">Đóng</button>
         </div>
       </aside>
     </div>
