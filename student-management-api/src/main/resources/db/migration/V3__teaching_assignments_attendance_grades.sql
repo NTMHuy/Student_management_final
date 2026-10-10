@@ -41,11 +41,12 @@ CREATE TABLE grade_records (
     school_year VARCHAR(9) NOT NULL,
     semester    SMALLINT NOT NULL CHECK (semester IN (1, 2)),
     assessment_type VARCHAR(12) NOT NULL CHECK (assessment_type IN ('ORAL', 'FIFTEEN_MIN', 'ONE_PERIOD', 'MIDTERM', 'FINAL')),
+    assessment_number SMALLINT NOT NULL DEFAULT 1 CHECK (assessment_number > 0),
     score       NUMERIC(4,2) NOT NULL CHECK (score >= 0 AND score <= 10),
     note        TEXT,
     created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
-    CONSTRAINT uq_grade_assessment UNIQUE (student_id, subject_id, school_year, semester, assessment_type, id)
+    CONSTRAINT uq_grade_assessment UNIQUE (student_id, subject_id, school_year, semester, assessment_type, assessment_number)
 );
 CREATE INDEX idx_grades_class_subject_term ON grade_records(class_id, subject_id, school_year, semester);
 CREATE INDEX idx_grades_student_term ON grade_records(student_id, school_year, semester);
