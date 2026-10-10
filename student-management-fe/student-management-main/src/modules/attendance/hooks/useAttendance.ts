@@ -61,7 +61,7 @@ export const useAttendance = (initialDailyFilters?: Partial<AttendanceFiltersSta
 
   const setStudentStatus = async (id: string, status: AttendanceStatus, note?: string) => {
     setDailyItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, status, ...(note ? { note } : {}) } : item))
+      prev.map((item) => (item.id === id ? { ...item, status, ...(note !== undefined ? { note } : {}) } : item))
     );
     await attendanceService.updateDailyStatus(id, status, note);
   };
