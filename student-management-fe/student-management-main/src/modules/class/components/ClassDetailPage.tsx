@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Breadcrumb } from '@/components/layout/Breadcrumb';
 
 import { useRouter } from 'next/navigation';
-import { useClasses } from '@/modules/class/hooks/useClasses';
+import { classService } from '@/modules/class/services/class.service';
+import { SchoolClass } from '@/modules/class/types';
 import {
   ArrowLeft,
   Users,
@@ -17,10 +18,27 @@ import {
 
 export default function ClassDetailPage({ params }: { params?: { id: string } }) {
   const router = useRouter();
-  const { classes } = useClasses();
+  const [schoolClass, setSchoolClass] = useState<SchoolClass | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const classId = params?.id || 'c-01';
-  const schoolClass = classes.find((c) => c.id === classId) || classes[0];
+  useEffect(() => {
+    let active = true;
+    if (!params?.id) {
+      setSchoolClass(null);
+      setIsLoading(false);
+      return () => { active = false; };
+    }
+    setIsLoading(true);
+    classService.getClass(params.id)
+      .then((item) => { if (active) setSchoolClass(item); })
+      .catch(() => { if (active) setSchoolClass(null); })
+      .finally(() => { if (active) setIsLoading(false); });
+    return () => { active = false; };
+  }, [params?.id]);
+
+  if (isLoading) {
+    return <div className="p-8 text-center text-on-surface-variant">Đang tải chi tiết lớp học...</div>;
+  }
 
   if (!schoolClass) {
     return (
