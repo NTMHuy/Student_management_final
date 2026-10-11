@@ -1,13 +1,12 @@
-FROM node:22-alpine
-WORKDIR /app
+   FROM node:22-slim
+   WORKDIR /app
 
-COPY package.json package-lock.json ./
-RUN npm ci
+   COPY package.json package-lock.json ./
+   RUN npm ci
 
-COPY . .
-RUN npm run build
+   COPY . .
+   RUN npm run build
 
-ENV NODE_ENV=production
-# Railway cấp cổng qua biến PORT (next start tự đọc PORT)
-EXPOSE 3000
-CMD ["npm", "start"]
+   ENV NODE_ENV=production
+   EXPOSE 3000
+   CMD ["npm", "start"]
