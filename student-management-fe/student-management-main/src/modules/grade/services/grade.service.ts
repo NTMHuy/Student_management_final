@@ -48,12 +48,23 @@ function parseTerm(value: string): { semester: number; schoolYear: string } {
   return { semester: Number(match[1]), schoolYear: match[2] };
 }
 
+function normalizeClassName(value: string): string {
+  return normalize(value).replace(/^LOP\\s*/, "").replace(/\\s+/g, "");
+}
+
 async function resolveClassId(className: string): Promise<string> {
   const classes = await classService.getClasses();
+  const target = normalizeClassName(className);
   const found = classes.find((item) =>
-    [item.className, item.classCode].some((name) => normalize(name) === normalize(className)),
+    [item.className, item.classCode].some((name) =>
+      normalizeClassName(name) === target || normalize(name) === normalize(className),
+    ),
   );
-  if (!found) throw new Error(`Không tìm thấy lớp ${className} trong dữ liệu hệ thống.`);
+  if (!found) {
+    throw new Error(
+      `Không tìm thấy lớp ${className}. Các lớp API trả về: ${classes.map((item) => item.className || item.classCode).join(", ") || "không có lớp"}.`,
+    );
+  }
   return found.id;
 }
 
