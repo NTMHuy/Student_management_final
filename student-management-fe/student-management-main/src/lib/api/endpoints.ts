@@ -11,5 +11,6 @@ export const API_ENDPOINTS = {
   subjects: "/api/subjects",
   grades: "/api/grades",
   attendance: "/api/attendance",
+  assignments: "/api/teaching-assignments",
   dashboard: "/api/dashboard/summary",
 } as const;
