@@ -1,6 +1,7 @@
 import React from 'react';
 import { StudentFiltersState } from '../types';
-import { GRADE_LEVELS, CLASS_OPTIONS } from '../constants';
+import { GRADE_LEVELS } from '../constants';
+import { useClassOptions } from '@/modules/class/hooks/useClassOptions';
 import { Search, RotateCcw, ChevronDown } from 'lucide-react';
 
 interface StudentFiltersProps {
@@ -14,6 +15,7 @@ export const StudentFilters: React.FC<StudentFiltersProps> = ({
   onFilterChange,
   onReset,
 }) => {
+  const { options: classOptions } = useClassOptions();
   return (
     <div className="p-4 sm:p-5 bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant/20 flex flex-col lg:flex-row gap-3 items-stretch lg:items-center justify-between">
       {/* Search Field */}
@@ -55,7 +57,7 @@ export const StudentFilters: React.FC<StudentFiltersProps> = ({
             className="w-full appearance-none pl-3 pr-8 py-2.5 bg-surface-container-low text-on-surface font-medium text-xs sm:text-sm rounded-xl outline-none cursor-pointer hover:bg-surface-container transition-colors"
           >
             <option value="">Lớp học: Tất cả</option>
-            {CLASS_OPTIONS.map((c) => (
+            {classOptions.map((c) => (
               <option key={c.value} value={c.value}>
                 {c.value}
               </option>

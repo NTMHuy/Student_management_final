@@ -1,5 +1,6 @@
 import React, { forwardRef } from 'react';
 import { cn } from '@/lib/utils';
+import { ChevronDown } from 'lucide-react';
 
 export interface SelectOption {
   value: string;
@@ -44,9 +45,10 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
                 ))
               : children}
           </select>
-          <span className="material-symbols-outlined absolute right-3 pointer-events-none text-outline text-[18px]">
+          {/* <span className="material-symbols-outlined absolute right-3 pointer-events-none text-outline text-[18px]">
             expand_more
-          </span>
+          </span> */}
+            <ChevronDown className="absolute right-3 w-[18px] h-[18px] pointer-events-none text-outline" />
         </div>
         {error && <p className="text-xs text-error">{error}</p>}
       </div>
