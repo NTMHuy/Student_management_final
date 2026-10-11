@@ -2,6 +2,7 @@
 
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { authService, AuthUser } from '@/modules/auth/services/auth.service';
+import { UNAUTHORIZED_EVENT } from '@/lib/api/client';
 
 export type UserRole = 'admin' | 'teacher';
 
@@ -56,6 +57,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => {
       active = false;
     };
+  }, []);
+
+  // Server trả 401 (phiên hết hạn / tài khoản bị khóa) → coi như đã đăng xuất, giao diện sẽ chuyển về /login.
+  useEffect(() => {
+    const onUnauthorized = () => setUser(null);
+    window.addEventListener(UNAUTHORIZED_EVENT, onUnauthorized);
+    return () => window.removeEventListener(UNAUTHORIZED_EVENT, onUnauthorized);
   }, []);
 
   const login = useCallback(async (email: string, password: string, expectedRole: UserRole): Promise<boolean> => {

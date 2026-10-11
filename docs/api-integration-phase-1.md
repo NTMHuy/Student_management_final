@@ -4,13 +4,7 @@ This branch connects the Next.js frontend to the Spring Boot REST API. The chang
 
 ## Local configuration
 
-Frontend: create `student-management-fe/student-management-main/.env.local`:
-
-```dotenv
-NEXT_PUBLIC_API_URL=http://localhost:8080
-```
-
-The base URL is the backend origin only; API paths already include `/api`.
+Frontend: không cần cấu hình gì khi chạy local. Trình duyệt chỉ gọi `/api/...` cùng origin và `src/proxy.ts` chuyển tiếp sang Spring Boot ở `BACKEND_URL` (mặc định `http://localhost:8080`). Nếu backend chạy ở địa chỉ khác, tạo `.env.local` với `BACKEND_URL=...`. Hãy xóa `NEXT_PUBLIC_API_URL` khỏi `.env.local` cũ (nếu có), biến này chỉ dùng khi muốn gọi thẳng API khác origin.
 
 Backend: set these environment variables as appropriate for your local PostgreSQL instance and initial admin account:
 
