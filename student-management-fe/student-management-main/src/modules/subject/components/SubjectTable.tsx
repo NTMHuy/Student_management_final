@@ -1,6 +1,6 @@
 import React from 'react';
 import { Subject } from '../types';
-import { Eye, Edit2, BookOpen, Trash2 } from 'lucide-react';
+import { Eye, Edit2, BookOpen, Trash2, Loader2 } from 'lucide-react';
 
 interface SubjectTableProps {
   subjects: Subject[];
@@ -20,9 +20,7 @@ export const SubjectTable: React.FC<SubjectTableProps> = ({
   if (isLoading) {
     return (
       <div className="bg-surface-container-lowest rounded-2xl p-8 flex flex-col items-center justify-center gap-3">
-        <span className="material-symbols-outlined text-[32px] text-primary animate-spin">
-          progress_activity
-        </span>
+        <Loader2 className="w-[32px] h-[32px] text-primary animate-spin" />
         <p className="text-sm text-on-surface-variant font-medium">Đang tải danh mục môn học...</p>
       </div>
     );

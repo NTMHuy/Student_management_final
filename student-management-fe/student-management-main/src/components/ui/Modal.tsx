@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { cn } from '@/lib/utils';
+import { X } from 'lucide-react';
 
 export interface ModalProps {
   isOpen: boolean;
@@ -70,7 +71,7 @@ export const Modal: React.FC<ModalProps> = ({
               onClick={onClose}
               className="p-1.5 rounded-lg text-outline hover:text-on-surface hover:bg-surface-container transition-colors"
             >
-              <span className="material-symbols-outlined text-[18px]">close</span>
+              <X className="w-[18px] h-[18px]" />
             </button>
           </div>
         )}

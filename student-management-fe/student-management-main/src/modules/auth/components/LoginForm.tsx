@@ -3,18 +3,7 @@
 import React, { useState } from 'react';
 import { useAuth, UserRole } from '@/lib/auth/AuthContext';
 import { useRouter } from 'next/navigation';
-import {
-  Shield,
-  GraduationCap,
-  Mail,
-  Lock,
-  Eye,
-  EyeOff,
-  ArrowRight,
-  CheckCircle,
-  HelpCircle,
-  ShieldCheck,
-} from 'lucide-react';
+import { Shield, GraduationCap, Mail, Lock, Eye, EyeOff, ArrowRight, CheckCircle, HelpCircle, ShieldCheck, Loader2 } from 'lucide-react';
 
 export const LoginForm: React.FC = () => {
   const { login } = useAuth();
@@ -106,7 +95,7 @@ export const LoginForm: React.FC = () => {
           {errorMessage && <p role="alert" className="rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700">{errorMessage}</p>}
 
           <button type="submit" disabled={isLoading || isSuccess} className={`mt-2 w-full h-11 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all select-none cursor-pointer ${isSuccess ? 'bg-secondary text-on-secondary shadow-md' : 'bg-primary-container text-on-primary hover:bg-primary shadow hover:shadow-md active:scale-[0.99]'}`}>
-            {isLoading ? <><span className="material-symbols-outlined text-[18px] animate-spin">progress_activity</span><span>Đang xác thực...</span></> : isSuccess ? <><CheckCircle className="w-4 h-4" /><span>Đăng nhập thành công</span></> : <><span>Đăng nhập vào hệ thống</span><ArrowRight className="w-4 h-4" /></>}
+            {isLoading ? <><Loader2 className="w-[18px] h-[18px] animate-spin" /><span>Đang xác thực...</span></> : isSuccess ? <><CheckCircle className="w-4 h-4" /><span>Đăng nhập thành công</span></> : <><span>Đăng nhập vào hệ thống</span><ArrowRight className="w-4 h-4" /></>}
           </button>
         </form>
 

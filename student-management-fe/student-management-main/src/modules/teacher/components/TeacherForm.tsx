@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Teacher, TeacherFormData } from '../types';
-import { X, Save, UserPlus } from 'lucide-react';
+import { X, Save, UserPlus, ChevronDown } from 'lucide-react';
 
 interface TeacherFormProps {
   isOpen: boolean;
@@ -240,9 +240,7 @@ export const TeacherForm: React.FC<TeacherFormProps> = ({
                     <option value="KHXH (Sử - Địa)">Tổ KHXH</option>
                     <option value="GDTC - Nghệ thuật">Tổ GDTC - Nghệ thuật</option>
                   </select>
-                  <span className="material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 text-outline text-[18px] pointer-events-none">
-                    expand_more
-                  </span>
+                  <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 text-outline w-[18px] h-[18px] pointer-events-none" />
                 </div>
               </div>
 
@@ -260,9 +258,7 @@ export const TeacherForm: React.FC<TeacherFormProps> = ({
                     <option value="Thạc sĩ">Thạc sĩ</option>
                     <option value="Tiến sĩ">Tiến sĩ</option>
                   </select>
-                  <span className="material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 text-outline text-[18px] pointer-events-none">
-                    expand_more
-                  </span>
+                  <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 text-outline w-[18px] h-[18px] pointer-events-none" />
                 </div>
               </div>
             </div>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { SchoolClass } from '../types';
-import { Eye, UserPlus, Users, Trash2, MapPin } from 'lucide-react';
+import { Eye, UserPlus, Users, Trash2, MapPin, Loader2 } from 'lucide-react';
 
 interface ClassTableProps {
   classes: SchoolClass[];
@@ -18,9 +18,7 @@ export const ClassTable: React.FC<ClassTableProps> = ({
   if (isLoading) {
     return (
       <div className="bg-surface-container-lowest rounded-2xl p-8 flex flex-col items-center justify-center gap-3">
-        <span className="material-symbols-outlined text-[32px] text-primary animate-spin">
-          progress_activity
-        </span>
+        <Loader2 className="w-[32px] h-[32px] text-primary animate-spin" />
         <p className="text-sm text-on-surface-variant font-medium">Đang tải danh sách lớp học...</p>
       </div>
     );

@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Student, StudentFormData } from '../types';
 import { GRADE_LEVELS } from '../constants';
 import { useClassOptions } from '@/modules/class/hooks/useClassOptions';
-// import { X, Save } from 'lucide-react';
 import { X, Save, ChevronDown } from 'lucide-react';
 
 interface StudentFormProps {
@@ -165,10 +164,7 @@ export const StudentForm: React.FC<StudentFormProps> = ({
                     <option value="female">Nữ</option>
                     <option value="other">Khác</option>
                   </select>
-                  {/* <span className="material-symbols-outlined pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-outline text-[18px]">
-                    keyboard_arrow_down
-                  </span> */}
-                    <ChevronDown className="w-4 h-4 pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-outline" />
+                  <ChevronDown className="w-4 h-4 pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-outline" />
                 </div>
               </div>
             </div>
@@ -195,9 +191,7 @@ export const StudentForm: React.FC<StudentFormProps> = ({
                       </option>
                     ))}
                   </select>
-                  <span className="material-symbols-outlined pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-outline text-[18px]">
-                    keyboard_arrow_down
-                  </span>
+                  <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-outline w-[18px] h-[18px]" />
                 </div>
               </div>
 
@@ -223,9 +217,7 @@ export const StudentForm: React.FC<StudentFormProps> = ({
                       </option>
                     ))}
                   </select>
-                  <span className="material-symbols-outlined pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-outline text-[18px]">
-                    keyboard_arrow_down
-                  </span>
+                  <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-outline w-[18px] h-[18px]" />
                 </div>
               </div>
             </div>
