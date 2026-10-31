@@ -120,7 +120,7 @@ public class GradeController {
         if (body.entries() == null) throw badRequest("Thiếu danh sách điểm");
         requireClassSubjectAccess(actor, body.classId(), body.subjectId());
         validateTerm(body.schoolYear(), body.semester());
-        Long teacherId = resolveTeacherId(actor, body.classId(), body.subjectId());
+        Long teacherId = null;
         java.util.Set<Long> changedStudents = new java.util.HashSet<>();
         for (BatchEntry entry : body.entries()) {
             if (entry.studentId() == null) throw badRequest("Thiếu sinh viên trong bảng điểm");
@@ -136,6 +136,7 @@ public class GradeController {
             } else {
                 BigDecimal score = normalizeScore(entry.score());
                 if (score == null) throw badRequest("Điểm phải nằm trong khoảng từ 0 đến 10");
+                if (teacherId == null) teacherId = resolveTeacherId(actor, body.classId(), body.subjectId());
                 save(entry.studentId(), body.classId(), body.subjectId(), teacherId, body.schoolYear(),
                         body.semester(), entry.assessmentType(), entry.assessmentNumber(), score, entry.note());
             }
@@ -180,7 +181,7 @@ public class GradeController {
         }
 
         BigDecimal processAverage = processScores.stream().reduce(BigDecimal.ZERO, BigDecimal::add)
-                .divide(BigDecimal.valueOf(processScores.size()), 2, RoundingMode.HALF_UP);
+                .divide(BigDecimal.valueOf(processScores.size()), 4, RoundingMode.HALF_UP);
         List<GradeResult> existing = jdbc.query("""
             SELECT student_id, process_average, midterm_score, final_score,
                    process_weight, midterm_weight, final_weight, total_score, calculated_at
