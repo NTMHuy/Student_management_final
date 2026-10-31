@@ -12,6 +12,9 @@ export const initialSubjects: Subject[] = [
     evaluationType: "score",
     headTeacher: "ThS. Vũ Hoàng Minh",
     status: "active",
+    processWeight: 30,
+    midtermWeight: 30,
+    finalWeight: 40,
   },
   {
     id: "sb-02",
@@ -24,6 +27,9 @@ export const initialSubjects: Subject[] = [
     evaluationType: "score",
     headTeacher: "Cô Lê Mai Hương",
     status: "active",
+    processWeight: 30,
+    midtermWeight: 30,
+    finalWeight: 40,
   },
   {
     id: "sb-03",
@@ -36,6 +42,9 @@ export const initialSubjects: Subject[] = [
     evaluationType: "score",
     headTeacher: "Cô Đặng Thu Hà",
     status: "active",
+    processWeight: 30,
+    midtermWeight: 30,
+    finalWeight: 40,
   },
   {
     id: "sb-04",
@@ -48,6 +57,9 @@ export const initialSubjects: Subject[] = [
     evaluationType: "score",
     headTeacher: "Thầy Phạm Hoàng Nam",
     status: "active",
+    processWeight: 30,
+    midtermWeight: 30,
+    finalWeight: 40,
   },
   {
     id: "sb-05",
@@ -60,6 +72,9 @@ export const initialSubjects: Subject[] = [
     evaluationType: "score",
     headTeacher: "Thầy Vũ Đức Thắng",
     status: "active",
+    processWeight: 30,
+    midtermWeight: 30,
+    finalWeight: 40,
   },
   {
     id: "sb-06",
@@ -72,6 +87,9 @@ export const initialSubjects: Subject[] = [
     evaluationType: "score",
     headTeacher: "ThS. Hoàng Thị Lan",
     status: "active",
+    processWeight: 30,
+    midtermWeight: 30,
+    finalWeight: 40,
   },
   {
     id: "sb-07",
@@ -84,6 +102,9 @@ export const initialSubjects: Subject[] = [
     evaluationType: "score",
     headTeacher: "Thầy Đỗ Anh Tuấn",
     status: "active",
+    processWeight: 30,
+    midtermWeight: 30,
+    finalWeight: 40,
   },
   {
     id: "sb-08",
@@ -96,5 +117,8 @@ export const initialSubjects: Subject[] = [
     evaluationType: "evaluation",
     headTeacher: "Thầy Hoàng Văn Bách",
     status: "active",
+    processWeight: 30,
+    midtermWeight: 30,
+    finalWeight: 40,
   },
 ];
