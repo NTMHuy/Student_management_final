@@ -29,7 +29,7 @@ export const GradeFilters: React.FC<GradeFiltersProps> = ({ filters, classes, su
           >
             {classes.length === 0 && <option value="">Chưa có lớp nào</option>}
             {classes.map((c) => (
-              <option key={c.id} value={c.id}>Lớp {c.name} (Khối {c.gradeLevel})</option>
+              <option key={c.id} value={c.id}>Lớp {c.name} ( )</option>
             ))}
           </select>
           <ChevronDown className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-outline" />
@@ -80,9 +80,9 @@ export const GradeFilters: React.FC<GradeFiltersProps> = ({ filters, classes, su
             onChange={(e) => onChange({ viewType: e.target.value as GradeFiltersState['viewType'] })}
             className={selectClass}
           >
-            <option value="all">Tất cả cột điểm (TX, GK, CK)</option>
-            <option value="tx">Chỉ Điểm thường xuyên (TX1, TX2, TX3)</option>
-            <option value="exam">Chỉ Điểm thi Giữa kỳ &amp; Cuối kỳ</option>
+            <option value="all">Tất cả thành phần điểm</option>
+            <option value="process">Chỉ điểm quá trình</option>
+            <option value="exam">Chỉ điểm giữa kỳ &amp; cuối kỳ</option>
           </select>
           <ChevronDown className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-outline" />
         </div>
