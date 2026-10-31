@@ -29,7 +29,7 @@ export const GradeFilters: React.FC<GradeFiltersProps> = ({ filters, classes, su
           >
             {classes.length === 0 && <option value="">Chưa có lớp nào</option>}
             {classes.map((c) => (
-              <option key={c.id} value={c.id}>Lớp {c.name} ( )</option>
+              <option key={c.id} value={c.id}>Lớp {c.name}</option>
             ))}
           </select>
           <ChevronDown className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-outline" />
