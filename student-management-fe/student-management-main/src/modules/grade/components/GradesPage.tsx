@@ -6,7 +6,7 @@ import { GradeFilters } from '@/modules/grade/components/GradeFilters';
 import { GradeTable } from '@/modules/grade/components/GradeTable';
 import { GradeDistributionCard } from '@/modules/grade/components/GradeDistributionCard';
 import { ValedictorianCard } from '@/modules/grade/components/ValedictorianCard';
-import { GRADE_COLUMNS, parseSemester } from '@/modules/grade/utils';
+import { parseSemester } from '@/modules/grade/utils';
 import { GradeFiltersState } from '@/modules/grade/types';
 import { Pagination } from '@/components/ui/Pagination';
 import { Download, RotateCcw, Save, CheckCircle, AlertCircle, X } from 'lucide-react';
@@ -27,6 +27,7 @@ export default function GradesPage() {
     filters,
     setFilters,
     handleCellChange,
+    addProcessAssessment,
     saveGrades,
     refresh,
     totalStudents,
@@ -90,14 +91,13 @@ export default function GradesPage() {
   const { schoolYear, semester } = parseSemester(filters.semester);
 
   const handleExport = () => {
-    const header = ['STT', 'Mã HS', 'Họ và tên', ...GRADE_COLUMNS.map((c) => c.label), 'ĐTB', 'Xếp loại'];
+    const maxProcessCount = Math.max(0, ...records.map((r) => r.processScores.length));
+    const processHeaders = Array.from({ length: maxProcessCount }, (_, i) => `Quá trình lần ${i + 1}`);
+    const header = ['STT', 'Mã SV', 'Họ và tên', ...processHeaders, 'Điểm giữa kỳ', 'Điểm cuối kỳ', 'ĐTB quá trình', 'Điểm tổng kết', 'Xếp loại'];
     const rows = records.map((r, i) => [
-      i + 1,
-      r.studentCode,
-      r.fullName,
-      ...GRADE_COLUMNS.map((c) => r[c.field] ?? ''),
-      r.avgScore ?? '',
-      r.rank ?? '',
+      i + 1, r.studentCode, r.fullName,
+      ...Array.from({ length: maxProcessCount }, (_, index) => r.processScores[index]?.score ?? ''),
+      r.midtermScore ?? '', r.finalScore ?? '', r.processAverage ?? '', r.avgScore ?? '', r.rank ?? '',
     ]);
     const csv = [header, ...rows]
       .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','))
@@ -147,7 +147,7 @@ export default function GradesPage() {
             )}
           </div>
           <p className="text-xs sm:text-sm text-on-surface-variant max-w-2xl leading-relaxed">
-            Nhập điểm kiểm tra thường xuyên, giữa kỳ, cuối kỳ (thang 0–10). Dùng Enter/mũi tên để di chuyển giữa các ô. Điểm chỉ được ghi vào hệ thống sau khi bấm &quot;Lưu bảng điểm&quot;.
+            Nhập nhiều lần điểm quá trình, điểm giữa kỳ và điểm cuối kỳ (thang 0–10). Dùng Enter/mũi tên để di chuyển giữa các ô. Điểm chỉ được ghi vào hệ thống sau khi bấm &quot;Lưu bảng điểm&quot;.
           </p>
         </div>
 
@@ -200,7 +200,7 @@ export default function GradesPage() {
           totalItems={totalStudents}
           pageSize={pageSize}
           onPageChange={setCurrentPage}
-          itemLabel="học sinh"
+          itemLabel="sinh viên"
         />
       </div>
 
