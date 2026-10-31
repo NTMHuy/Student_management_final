@@ -7,7 +7,7 @@ interface ValedictorianCardProps {
   className: string;
 }
 
-/** Học sinh có ĐTB cao nhất của lớp/môn đang xem (chỉ tính học sinh đã đủ 5 cột điểm). */
+/** Sinh viên có điểm tổng kết cao nhất của lớp/môn đang xem. */
 export const ValedictorianCard: React.FC<ValedictorianCardProps> = ({ records, className }) => {
   const ranked = records.filter((r) => r.avgScore !== null);
   const top = ranked.reduce<StudentGradeRecord | null>(
@@ -22,24 +22,24 @@ export const ValedictorianCard: React.FC<ValedictorianCardProps> = ({ records, c
           <Award className="w-6 h-6" />
         </div>
         <div className="flex flex-col">
-          <span className="text-[11px] font-bold uppercase text-outline tracking-wider">Thủ khoa môn học</span>
+          <span className="text-[11px] font-bold uppercase text-outline tracking-wider">Sinh viên có điểm cao nhất</span>
           {top ? (
             <>
               <span className="font-bold text-sm text-on-surface">
                 {top.fullName}{className ? ` (${className})` : ''}
               </span>
               <span className="font-mono text-xs text-secondary font-bold">
-                ĐTB: {top.avgScore?.toFixed(1)} • {top.rank}
+                Điểm tổng kết: {top.avgScore?.toFixed(2)} • {top.rank}
               </span>
             </>
           ) : (
-            <span className="text-sm text-on-surface-variant">Chưa có học sinh nào đủ điểm</span>
+            <span className="text-sm text-on-surface-variant">Chưa có sinh viên nào đủ điểm</span>
           )}
         </div>
       </div>
       <div className="p-3 bg-surface-container-low rounded-xl text-xs text-on-surface-variant flex items-start gap-2">
         <Info className="w-4 h-4 shrink-0 mt-0.5 text-outline" />
-        <span>ĐTB = (TX1 + TX2 + TX3 + 2×Giữa kỳ + 3×Cuối kỳ) / 8, chỉ tính khi học sinh đã có đủ 5 cột điểm.</span>
+        <span>Điểm tổng kết = trung bình quá trình × trọng số quá trình + giữa kỳ × trọng số giữa kỳ + cuối kỳ × trọng số cuối kỳ.</span>
       </div>
     </div>
   );
