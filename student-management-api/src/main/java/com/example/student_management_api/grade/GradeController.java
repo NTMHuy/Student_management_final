@@ -248,7 +248,7 @@ public class GradeController {
             VALUES (?,?,?,?,?,?,?,?,?,?)
             ON CONFLICT (student_id,subject_id,school_year,semester,assessment_type,assessment_number)
             DO UPDATE SET class_id=EXCLUDED.class_id, teacher_id=EXCLUDED.teacher_id,
-                score=EXCLUDED.score, note=EXCLUDED.note, updated_at=now()
+                score=EXCLUDED.score, note=COALESCE(EXCLUDED.note, grade_records.note), updated_at=now()
             """, studentId,classId,subjectId,teacherId,year,semester,type,number,score,
             note == null || note.isBlank() ? null : note.trim());
     }
