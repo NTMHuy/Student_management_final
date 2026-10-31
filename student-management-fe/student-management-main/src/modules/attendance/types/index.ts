@@ -47,7 +47,7 @@ export interface AttendanceFiltersState {
   classId: string;
   date: string; // yyyy-mm-dd
   session: AttendanceSession;
-  /** '' = không theo môn */
+  /** Môn học bắt buộc khi điểm danh theo phân công lớp/môn. */
   subjectId: string;
 }
 
