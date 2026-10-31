@@ -58,7 +58,7 @@ CREATE TABLE grade_results (
     subject_id          BIGINT NOT NULL REFERENCES subjects(id) ON DELETE RESTRICT,
     school_year         VARCHAR(9) NOT NULL,
     semester            SMALLINT NOT NULL CHECK (semester IN (1, 2)),
-    process_average     NUMERIC(4,2) NOT NULL CHECK (process_average BETWEEN 0 AND 10),
+    process_average     NUMERIC(8,4) NOT NULL CHECK (process_average BETWEEN 0 AND 10),
     midterm_score       NUMERIC(4,2) NOT NULL CHECK (midterm_score BETWEEN 0 AND 10),
     final_score         NUMERIC(4,2) NOT NULL CHECK (final_score BETWEEN 0 AND 10),
     process_weight      NUMERIC(5,2) NOT NULL CHECK (process_weight BETWEEN 0 AND 100),
