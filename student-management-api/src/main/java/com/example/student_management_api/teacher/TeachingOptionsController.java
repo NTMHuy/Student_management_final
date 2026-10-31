@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Lớp/môn mà người dùng hiện tại được phép điểm danh / nhập điểm, để giao diện đổ vào ô chọn.
- * Admin: tất cả (restricted = false, pairs rỗng). Giáo viên: lớp chủ nhiệm hoặc được phân công;
+ * Admin: tất cả (restricted = false, pairs rỗng). Giáo viên: chỉ lớp/môn được phân công;
  * pairs là các cặp (lớp, môn) được phân công, dùng cho nhập điểm.
  */
 @RestController
@@ -54,12 +54,12 @@ public class TeachingOptionsController {
             return new Options(true, List.of(), List.of(), List.of());
         }
         List<ClassOption> classes = jdbc.query("""
-            SELECT c.id, c.class_name, c.grade_level FROM classes c
-            WHERE c.homeroom_teacher_id = ? OR EXISTS (
-              SELECT 1 FROM teacher_class_subjects tcs WHERE tcs.teacher_id = ? AND tcs.class_id = c.id)
+            SELECT DISTINCT c.id, c.class_name, c.grade_level FROM classes c
+            JOIN teacher_class_subjects tcs ON tcs.class_id = c.id
+            WHERE tcs.teacher_id = ? AND c.status = 'ACTIVE'
             ORDER BY c.grade_level, c.class_name
             """, (rs, n) -> new ClassOption(rs.getLong("id"), rs.getString("class_name"), rs.getInt("grade_level")),
-            teacherId, teacherId);
+            teacherId);
         List<SubjectOption> subjects = jdbc.query("""
             SELECT DISTINCT s.id, s.subject_code, s.name FROM subjects s
             JOIN teacher_class_subjects tcs ON tcs.subject_id = s.id
