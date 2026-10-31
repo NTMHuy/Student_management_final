@@ -12,7 +12,7 @@
 - Giữa kỳ và cuối kỳ mỗi thành phần có một điểm.
 - Điểm thành phần nằm trong thang 0–10.
 - Trọng số là phần trăm; tổng ba trọng số bắt buộc bằng 100%.
-- Điểm tổng kết làm tròn 2 chữ số thập phân theo HALF_UP.
+- Điểm quá trình được tính với độ chính xác nội bộ 4 chữ số thập phân; chỉ điểm tổng kết được làm tròn 2 chữ số thập phân theo HALF_UP.
 - Không tính điểm tổng kết khi thiếu một trong ba thành phần.
 - Khi trọng số môn học thay đổi, kết quả đã được tạo trước đó không thay đổi. Kết quả mới dùng bộ trọng số mới.
 
@@ -80,7 +80,9 @@ Khi điểm thành phần thay đổi sau khi kết quả đã được tạo, t
 Schema hiện tại dùng các loại `ORAL`, `FIFTEEN_MIN`, `ONE_PERIOD`, `MIDTERM`, `FINAL`.
 
 - Ba loại ORAL/FIFTEEN_MIN/ONE_PERIOD có thể chuyển thành các lần PROCESS riêng; cần đánh lại số thứ tự để tránh trùng số lần.
-- MIDTERM/FINAL cũ có thể có nhiều assessment_number. Trước khi chuyển sang quy tắc một điểm giữa kỳ/cuối kỳ, phải kiểm kê dữ liệu thực tế và xác định cách bảo toàn các bản ghi trùng loại. Không tự ý ghi đè, xóa hoặc lấy trung bình các bản ghi cũ.
+- MIDTERM/FINAL cũ có thể có nhiều assessment_number. Migration giữ nguyên tất cả các bản ghi này; API và giao diện mới chỉ sử dụng assessment_number = 1 cho điểm giữa kỳ/cuối kỳ. Các bản ghi có số lần lớn hơn 1 vẫn nằm trong grade_records để đối soát thủ công, không bị tự ý gộp hoặc xóa.
+- Trước khi đưa migration vào production, cần kiểm kê số lượng các bản ghi MIDTERM/FINAL có assessment_number > 1 và lập danh sách đối soát. Không tự ý ghi đè, xóa hoặc lấy trung bình các bản ghi này.
+- Điểm trung bình/xếp loại cũ trước đây được tính ở frontend, không được lưu thành kết quả tổng kết trong database. Migration không thể tạo snapshot chính xác cho kết quả lịch sử đó; grade_results chỉ được tạo từ lúc mô hình mới vận hành và khi đủ ba thành phần.
 - Migration phải chạy theo hướng không mất dữ liệu; sao lưu và kiểm tra số lượng bản ghi trước/sau.
 - Không chạy migration trên Railway production trong giai đoạn thiết kế.
 
