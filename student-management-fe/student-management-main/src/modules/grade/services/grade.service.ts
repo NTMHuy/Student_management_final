@@ -58,8 +58,8 @@ export const gradeService = {
       if (row.score === null || row.assessmentType === null || row.assessmentNumber === null) continue;
       if (row.assessmentType === 'PROCESS') {
         rec.processScores.push({ assessmentNumber: row.assessmentNumber, score: Number(row.score), note: row.note });
-      } else if (row.assessmentType === 'MIDTERM') rec.midtermScore = Number(row.score);
-      else if (row.assessmentType === 'FINAL') rec.finalScore = Number(row.score);
+      } else if (row.assessmentType === 'MIDTERM' && row.assessmentNumber === 1) rec.midtermScore = Number(row.score);
+      else if (row.assessmentType === 'FINAL' && row.assessmentNumber === 1) rec.finalScore = Number(row.score);
     }
     const resultMap = new Map(results.map((r) => [r.studentId, r]));
     return [...byStudent.values()].map((rec) => {
