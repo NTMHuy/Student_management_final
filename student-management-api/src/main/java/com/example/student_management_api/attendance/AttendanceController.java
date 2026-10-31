@@ -54,7 +54,7 @@ public class AttendanceController {
     public record WarningRow(Long studentId, String studentCode, String fullName, String className,
             int totalMissed, int unexcused, int excused) {}
 
-    /** Danh sách học sinh của lớp kèm trạng thái điểm danh của buổi (status = null nếu chưa điểm danh). */
+    /** Danh sách sinh viên của lớp/môn kèm trạng thái điểm danh (null nếu chưa điểm danh). */
     @GetMapping
     public List<AttendanceRow> list(@AuthenticationPrincipal Jwt jwt,
             @RequestParam Long classId,
@@ -71,13 +71,13 @@ public class AttendanceController {
             FROM students s
             LEFT JOIN attendance_records ar
               ON ar.student_id = s.id AND ar.class_id = s.class_id
-             AND ar.attendance_date = ? AND ar.session = ?
+             AND ar.subject_id = ? AND ar.attendance_date = ? AND ar.session = ?
             WHERE s.class_id = ? AND s.status = 'ACTIVE'
             ORDER BY s.student_code
             """, (rs, n) -> new AttendanceRow(
                 nullableLong(rs, "attendance_id"), rs.getLong("student_id"), rs.getString("student_code"),
                 rs.getString("full_name"), rs.getString("status"), rs.getString("note")),
-            date, session, classId);
+            subjectId, date, session, classId);
     }
 
     /** Điểm danh một học sinh. */
@@ -98,10 +98,10 @@ public class AttendanceController {
         return jdbc.queryForObject("""
             SELECT ar.id, s.id AS student_id, s.student_code, s.full_name, ar.status, ar.note
             FROM attendance_records ar JOIN students s ON s.id=ar.student_id
-            WHERE ar.student_id=? AND ar.attendance_date=? AND ar.session=?
+            WHERE ar.student_id=? AND ar.subject_id=? AND ar.attendance_date=? AND ar.session=?
             """, (rs, n) -> new AttendanceRow(rs.getLong("id"), rs.getLong("student_id"),
                 rs.getString("student_code"), rs.getString("full_name"), rs.getString("status"), rs.getString("note")),
-            body.studentId(), body.date(), body.session());
+            body.studentId(), body.subjectId(), body.date(), body.session());
     }
 
     /** Lưu điểm danh cả lớp trong một giao dịch (nút "Lưu điểm danh"). */
@@ -231,8 +231,9 @@ public class AttendanceController {
         jdbc.update("""
             INSERT INTO attendance_records(student_id, class_id, subject_id, teacher_id, attendance_date, session, status, note)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            ON CONFLICT (student_id, attendance_date, session)
-            DO UPDATE SET class_id=EXCLUDED.class_id, subject_id=EXCLUDED.subject_id,
+            ON CONFLICT (student_id, attendance_date, session, subject_id)
+              WHERE subject_id IS NOT NULL
+            DO UPDATE SET class_id=EXCLUDED.class_id,
               teacher_id=EXCLUDED.teacher_id, status=EXCLUDED.status, note=EXCLUDED.note, updated_at=now()
             """, studentId, classId, subjectId, teacherId, date, session, status, blankToNull(note));
     }
@@ -266,7 +267,7 @@ public class AttendanceController {
             "SELECT count(*) FROM students WHERE id = ? AND class_id = ?",
             Integer.class, studentId, classId);
         if (belongs == null || belongs == 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Học sinh không thuộc lớp");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Sinh viên không thuộc lớp");
         }
     }
 
@@ -294,32 +295,34 @@ public class AttendanceController {
             return;
         }
         if (actor.teacherId() == null) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Tài khoản chưa gắn hồ sơ giáo viên");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Tài khoản chưa gắn hồ sơ giảng viên");
         }
         sql.append("""
-             AND (c.homeroom_teacher_id = ? OR EXISTS (
+             AND EXISTS (
                    SELECT 1 FROM teacher_class_subjects tcs
-                   WHERE tcs.teacher_id = ? AND tcs.class_id = c.id))
+                   WHERE tcs.teacher_id = ? AND tcs.class_id = ar.class_id
+                     AND tcs.subject_id = ar.subject_id)
             """);
-        params.add(actor.teacherId());
         params.add(actor.teacherId());
     }
 
     private void requireClassAccess(Actor actor, Long classId, Long subjectId) {
+        if (classId == null || subjectId == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Vui lòng chọn lớp và môn học");
+        }
         if (actor.isAdmin()) {
             return;
         }
         if (actor.teacherId() == null) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Tài khoản chưa gắn hồ sơ giáo viên");
         }
+        if (subjectId == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Vui lòng chọn môn học để điểm danh");
+        }
         Integer allowed = jdbc.queryForObject("""
-            SELECT count(*) FROM classes c
-            WHERE c.id = ? AND (c.homeroom_teacher_id = ? OR EXISTS (
-              SELECT 1 FROM teacher_class_subjects tcs
-              WHERE tcs.teacher_id = ? AND tcs.class_id = c.id
-                AND (CAST(? AS BIGINT) IS NULL OR tcs.subject_id = ?)
-            ))
-            """, Integer.class, classId, actor.teacherId(), actor.teacherId(), subjectId, subjectId);
+            SELECT count(*) FROM teacher_class_subjects
+            WHERE teacher_id = ? AND class_id = ? AND subject_id = ?
+            """, Integer.class, actor.teacherId(), classId, subjectId);
         if (allowed == null || allowed == 0) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không được phân công lớp/môn này");
         }
