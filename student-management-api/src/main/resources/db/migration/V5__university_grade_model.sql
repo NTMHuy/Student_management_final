@@ -1,6 +1,27 @@
 -- V5: Nâng cấp cấu trúc điểm theo mô hình PROCESS / MIDTERM / FINAL.
 -- Migration chỉ chuyển đổi nhãn các điểm quá trình cũ; không xóa/gộp bất kỳ bản ghi điểm nào.
 
+-- Chụp lại các điểm đã đủ 5 cột theo đúng công thức cũ của giao diện
+-- để có thể bảo toàn kết quả đang hiển thị trước khi đổi mô hình.
+CREATE TEMPORARY TABLE legacy_grade_result_seed ON COMMIT DROP AS
+SELECT student_id,
+       class_id,
+       subject_id,
+       school_year,
+       semester,
+       MAX(score) FILTER (WHERE assessment_type = 'ORAL' AND assessment_number = 1) AS tx1,
+       MAX(score) FILTER (WHERE assessment_type = 'FIFTEEN_MIN' AND assessment_number = 1) AS tx2,
+       MAX(score) FILTER (WHERE assessment_type = 'ONE_PERIOD' AND assessment_number = 1) AS tx3,
+       MAX(score) FILTER (WHERE assessment_type = 'MIDTERM' AND assessment_number = 1) AS midterm_score,
+       MAX(score) FILTER (WHERE assessment_type = 'FINAL' AND assessment_number = 1) AS final_score
+FROM grade_records
+GROUP BY student_id, class_id, subject_id, school_year, semester
+HAVING COUNT(*) FILTER (WHERE assessment_type = 'ORAL' AND assessment_number = 1) > 0
+   AND COUNT(*) FILTER (WHERE assessment_type = 'FIFTEEN_MIN' AND assessment_number = 1) > 0
+   AND COUNT(*) FILTER (WHERE assessment_type = 'ONE_PERIOD' AND assessment_number = 1) > 0
+   AND COUNT(*) FILTER (WHERE assessment_type = 'MIDTERM' AND assessment_number = 1) > 0
+   AND COUNT(*) FILTER (WHERE assessment_type = 'FINAL' AND assessment_number = 1) > 0;
+
 ALTER TABLE subjects
     ADD COLUMN process_weight NUMERIC(5,2) NOT NULL DEFAULT 30.00,
     ADD COLUMN midterm_weight NUMERIC(5,2) NOT NULL DEFAULT 30.00,
@@ -77,3 +98,18 @@ CREATE INDEX idx_grade_results_class_subject_term
     ON grade_results(class_id, subject_id, school_year, semester);
 CREATE INDEX idx_grade_results_student_term
     ON grade_results(student_id, school_year, semester);
+
+-- Giữ nguyên điểm tổng kết cũ cho các bộ điểm đã đủ 5 cột.
+-- Bộ trọng số snapshot 37.5/25/37.5 tương đương công thức cũ:
+-- (TX1 + TX2 + TX3 + 2*GK + 3*CK) / 8.
+INSERT INTO grade_results (
+    student_id, class_id, subject_id, school_year, semester,
+    process_average, midterm_score, final_score,
+    process_weight, midterm_weight, final_weight, total_score
+)
+SELECT student_id, class_id, subject_id, school_year, semester,
+       ROUND((tx1 + tx2 + tx3) / 3.0, 4),
+       midterm_score, final_score,
+       37.50, 25.00, 37.50,
+       ROUND((tx1 + tx2 + tx3 + 2 * midterm_score + 3 * final_score) / 8.0, 2)
+FROM legacy_grade_result_seed;
