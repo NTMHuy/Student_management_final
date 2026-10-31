@@ -16,6 +16,10 @@ ALTER TABLE subjects
     ADD CONSTRAINT ck_subject_grade_weights_sum
         CHECK (process_weight + midterm_weight + final_weight = 100.00);
 
+-- Bỏ CHECK cũ trước khi đổi các nhãn loại điểm sang PROCESS.
+ALTER TABLE grade_records
+    DROP CONSTRAINT IF EXISTS grade_records_assessment_type_check;
+
 -- Đánh số lại các lần đánh giá quá trình cũ theo từng sinh viên/môn/năm học/học kỳ.
 -- ORDER BY bảo đảm kết quả chuyển đổi ổn định và không phụ thuộc thứ tự trả về của DB.
 WITH legacy_process AS (
@@ -40,9 +44,6 @@ SET assessment_type = 'PROCESS',
     assessment_number = lp.new_number
 FROM legacy_process lp
 WHERE gr.id = lp.id;
-
-ALTER TABLE grade_records
-    DROP CONSTRAINT IF EXISTS grade_records_assessment_type_check;
 
 ALTER TABLE grade_records
     ADD CONSTRAINT ck_grade_records_assessment_type
