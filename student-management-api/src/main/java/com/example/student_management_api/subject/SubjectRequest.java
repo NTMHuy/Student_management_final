@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import java.math.BigDecimal;
 
 /** Dữ liệu form môn học (khớp SubjectFormData). evaluationType: score | evaluation. */
 public record SubjectRequest(
@@ -26,5 +27,8 @@ public record SubjectRequest(
         @Max(value = 20, message = "Số tiết phải từ 0 đến 20") Integer grade12Periods,
         String description,
         String headTeacherId,
-        String status) {
+        String status,
+        BigDecimal processWeight,
+        BigDecimal midtermWeight,
+        BigDecimal finalWeight) {
 }
