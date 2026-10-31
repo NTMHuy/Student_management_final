@@ -12,6 +12,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.math.BigDecimal;
 import java.time.Instant;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -49,6 +50,15 @@ public class Subject {
 
     @Column(name = "periods_grade12", nullable = false)
     private Integer periodsGrade12 = 0;
+
+    @Column(name = "process_weight", nullable = false, precision = 5, scale = 2)
+    private BigDecimal processWeight = new BigDecimal("30.00");
+
+    @Column(name = "midterm_weight", nullable = false, precision = 5, scale = 2)
+    private BigDecimal midtermWeight = new BigDecimal("30.00");
+
+    @Column(name = "final_weight", nullable = false, precision = 5, scale = 2)
+    private BigDecimal finalWeight = new BigDecimal("40.00");
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "head_teacher_id")
@@ -91,6 +101,15 @@ public class Subject {
 
     public Integer getPeriodsGrade12() { return periodsGrade12; }
     public void setPeriodsGrade12(Integer periodsGrade12) { this.periodsGrade12 = periodsGrade12; }
+
+    public BigDecimal getProcessWeight() { return processWeight; }
+    public void setProcessWeight(BigDecimal processWeight) { this.processWeight = processWeight; }
+
+    public BigDecimal getMidtermWeight() { return midtermWeight; }
+    public void setMidtermWeight(BigDecimal midtermWeight) { this.midtermWeight = midtermWeight; }
+
+    public BigDecimal getFinalWeight() { return finalWeight; }
+    public void setFinalWeight(BigDecimal finalWeight) { this.finalWeight = finalWeight; }
 
     public Teacher getHeadTeacher() { return headTeacher; }
     public void setHeadTeacher(Teacher headTeacher) { this.headTeacher = headTeacher; }
