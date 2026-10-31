@@ -23,6 +23,9 @@ export const SubjectModal: React.FC<SubjectModalProps> = ({
     grade10Periods: 2,
     grade11Periods: 2,
     grade12Periods: 2,
+    processWeight: 30,
+    midtermWeight: 30,
+    finalWeight: 40,
     description: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -37,6 +40,9 @@ export const SubjectModal: React.FC<SubjectModalProps> = ({
         grade10Periods: initialData.periodsByGrade.grade10,
         grade11Periods: initialData.periodsByGrade.grade11,
         grade12Periods: initialData.periodsByGrade.grade12,
+        processWeight: initialData.processWeight ?? 30,
+        midtermWeight: initialData.midtermWeight ?? 30,
+        finalWeight: initialData.finalWeight ?? 40,
         description: initialData.description || '',
       });
     } else {
@@ -55,6 +61,10 @@ export const SubjectModal: React.FC<SubjectModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (formData.evaluationType === 'score' && Math.abs(formData.processWeight + formData.midtermWeight + formData.finalWeight - 100) > 0.000001) {
+      window.alert('Tổng trọng số phải bằng 100%.');
+      return;
+    }
     setIsSubmitting(true);
     try {
       await onSubmit(formData);
@@ -244,6 +254,40 @@ export const SubjectModal: React.FC<SubjectModalProps> = ({
               </div>
             </div>
           </div>
+
+          {/* Trọng số tính điểm theo môn học */}
+          {formData.evaluationType === 'score' && (
+            <div className="flex flex-col gap-2 rounded-2xl border border-outline-variant/20 p-4">
+              <div>
+                <label className="text-xs font-semibold text-on-surface">Trọng số tính điểm</label>
+                <p className="text-xs text-on-surface-variant">Tổng ba thành phần phải bằng 100%. Áp dụng cho kết quả mới.</p>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                {([
+                  ['processWeight', 'Quá trình'],
+                  ['midtermWeight', 'Giữa kỳ'],
+                  ['finalWeight', 'Cuối kỳ'],
+                ] as const).map(([field, label]) => (
+                  <div key={field} className="flex flex-col gap-1">
+                    <label className="text-xs text-on-surface-variant">{label} (%)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.01"
+                      required
+                      value={formData[field]}
+                      onChange={(e) => setFormData({ ...formData, [field]: Number(e.target.value) })}
+                      className="h-10 w-full rounded-xl bg-surface-container-low px-3 text-sm text-on-surface"
+                    />
+                  </div>
+                ))}
+              </div>
+              <p className={formData.processWeight + formData.midtermWeight + formData.finalWeight === 100 ? 'text-xs text-green-600' : 'text-xs text-error'}>
+                Tổng trọng số: {(formData.processWeight + formData.midtermWeight + formData.finalWeight).toFixed(2)}%
+              </p>
+            </div>
+          )}
 
           {/* Mô tả & Mục tiêu chương trình học */}
           <div className="flex flex-col gap-1.5">
