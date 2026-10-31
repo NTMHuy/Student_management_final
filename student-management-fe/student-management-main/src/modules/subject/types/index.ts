@@ -16,6 +16,9 @@ export interface Subject {
   headTeacher: string;
   status: 'active' | 'inactive';
   description?: string;
+  processWeight: number;
+  midtermWeight: number;
+  finalWeight: number;
 }
 
 export interface SubjectFiltersState {
@@ -33,5 +36,8 @@ export interface SubjectFormData {
   grade10Periods: number;
   grade11Periods: number;
   grade12Periods: number;
+  processWeight: number;
+  midtermWeight: number;
+  finalWeight: number;
   description?: string;
 }
