@@ -20,7 +20,7 @@ export const GradeDistributionCard: React.FC<GradeDistributionCardProps> = ({ re
   return (
     <div className="p-6 bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant/20 flex flex-col justify-between gap-4">
       <div className="flex items-center justify-between">
-        <span className="font-semibold text-sm text-on-surface">Phổ điểm học kỳ</span>
+        <span className="font-semibold text-sm text-on-surface">Phổ điểm tổng kết học kỳ</span>
         <BarChart3 className="w-5 h-5 text-outline" />
       </div>
 
@@ -68,8 +68,8 @@ export const GradeDistributionCard: React.FC<GradeDistributionCardProps> = ({ re
 
       <p className="text-xs text-on-surface-variant">
         {scored === 0
-          ? 'Chưa có học sinh nào đủ điểm để thống kê.'
-          : `${Math.round(((from65to8 + from8to10) / scored) * 100)}% học sinh đã có ĐTB đạt từ mức Khá trở lên (${scored}/${records.length} học sinh đủ điểm).`}
+          ? 'Chưa có sinh viên nào đủ điểm để thống kê.'
+          : `${Math.round(((from65to8 + from8to10) / scored) * 100)}% sinh viên đã có điểm tổng kết đạt từ mức Khá trở lên (${scored}/${records.length} sinh viên đủ điểm).`}
       </p>
     </div>
   );
