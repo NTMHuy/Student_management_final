@@ -1,6 +1,6 @@
 # University Database Design – ERD Proposal
 
-> Status: proposed logical model for review. This is not an executable migration and must not be applied to Railway. Confirmed business rules are separated from design recommendations and unresolved policy decisions.
+> Status: approved MVP baseline. The project owner approved the ten policy defaults in section 6. This document describes the target model; production rollout still requires migration validation and explicit approval.
 
 ## 1. Design principles
 
@@ -197,7 +197,7 @@ Suggested fields:
 - `student_code` unique, not null
 - `student_class_id` FK to student_classes
 - `full_name` not null
-- `date_of_birth` nullable unless the institution requires it
+- `date_of_birth` NOT NULL (approved: required)
 - `gender` using the existing supported values, subject to review
 - `email` nullable/unique according to institutional policy
 - `phone`, `address`, `notes`
@@ -375,24 +375,30 @@ Unless separately approved:
 - Recurring timetable templates and automatic conflict detection.
 - Automatic student-class promotion.
 
-## 6. Decisions required before writing Flyway migrations
+## 6. Approved MVP policy defaults
 
-These are genuine policy choices, not implementation details to guess:
+The project owner approved these ten defaults:
 
-1. **Department and major:** approve separate tables, with each major belonging to one department? Recommended: yes.
-2. **Student cohort:** should `student_classes` identify a major + intake year (e.g. CNTT-K20A)? Recommended: yes.
-3. **Academic calendar:** how many semesters per academic year (2 or 3), and are summer terms needed? Recommended: allow term numbers 1–3.
-4. **Enrollment:** can students self-register, or only ADMIN/staff? Can students withdraw? What happens to grades after withdrawal?
-5. **Retakes:** can a student repeat a subject in a later semester, and should every attempt be retained as a separate enrollment?
-6. **Capacity:** should course-section capacity be mandatory and should enrollment be rejected when full?
-7. **Schedule:** is a dated session schedule sufficient, or do you need recurring weekday/time/room plus generated sessions?
-8. **Grading:** are weights configured per course section or centrally by subject? Recommended: configure per course section and snapshot into grade_results.
-9. **Student class changes:** do you need transfer history, or is current student_class_id sufficient for MVP?
-10. **Student identity:** should student email be required/unique, and should date of birth remain required?
+1. Departments and majors are separate tables; each major belongs to one department.
+2. A student class identifies a major and intake year.
+3. An academic year supports term 1, term 2, and summer term 3.
+4. ADMIN/staff manage enrollment in the first release; student self-registration is not included.
+5. Students may repeat a subject in another semester; each course-section enrollment is retained separately.
+6. Course-section capacity is required and must be enforced when enrolling.
+7. Schedule is managed as dated course sessions; recurring schedule generation is out of MVP.
+8. Grading weights are configured per course section and snapshotted into the saved result.
+9. MVP stores the current student class only; class-transfer history is deferred.
+10. Student email is optional; date of birth is required.
 
-## 7. Migration strategy (not yet implemented)
+Implementation notes:
+- The current unique key `(student_id, course_section_id)` permits one enrollment per student in a specific course section, while allowing a repeat in a different semester/course section.
+- Student self-service enrollment endpoints must not be exposed in MVP.
+- Capacity enforcement must be transactional to prevent concurrent registrations from exceeding capacity.
+- The schema currently leaves `students.student_class_id` nullable to preserve legacy school records during transition. New university student creation must require it; making the column globally NOT NULL requires an approved legacy-data reconciliation.
 
-The current main branch has school-oriented V1–V3 migrations. Do not edit them. Once this design is approved:
+## 7. Migration strategy and current implementation status
+
+The current main branch has school-oriented V1–V3 migrations. Do not edit them. Migration V4 has been added on the feature branch as an additive university schema. It has not been run against Railway. Before treating it as ready for deployment, validate it against a disposable PostgreSQL database and implement matching JPA entities, repositories, services, controllers, and tests. Next steps:
 
 1. Add new Flyway migration(s) to create university tables and indexes.
 2. Decide whether old `classes`, `class_leaders`, and old school grade/attendance data remain as legacy tables, are archived, or are transformed.
