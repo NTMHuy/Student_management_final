@@ -130,14 +130,17 @@ public class SubjectService {
                 ? r.finalWeight()
                 : (subject.getFinalWeight() == null ? new BigDecimal("40.00") : subject.getFinalWeight());
 
-        if (processWeight.compareTo(BigDecimal.ZERO) < 0 || processWeight.compareTo(new BigDecimal("100")) > 0
+        if (processWeight.stripTrailingZeros().scale() > 2
+                || midtermWeight.stripTrailingZeros().scale() > 2
+                || finalWeight.stripTrailingZeros().scale() > 2
+                || processWeight.compareTo(BigDecimal.ZERO) < 0 || processWeight.compareTo(new BigDecimal("100")) > 0
                 || midtermWeight.compareTo(BigDecimal.ZERO) < 0 || midtermWeight.compareTo(new BigDecimal("100")) > 0
                 || finalWeight.compareTo(BigDecimal.ZERO) < 0 || finalWeight.compareTo(new BigDecimal("100")) > 0
                 || processWeight.add(midtermWeight).add(finalWeight).compareTo(new BigDecimal("100.00")) != 0) {
             throw Text.badRequest("Tổng trọng số điểm quá trình, giữa kỳ và cuối kỳ phải bằng 100%");
         }
 
-        subject.setProcessWeight(processWeight.setScale(2, java.math.RoundingMode.UNNECESSARY));
+        subject.setProcessWeight(processWeight.setScale(2, java.math.RoundingMode.HALF_UP));
         subject.setMidtermWeight(midtermWeight.setScale(2, java.math.RoundingMode.UNNECESSARY));
         subject.setFinalWeight(finalWeight.setScale(2, java.math.RoundingMode.UNNECESSARY));
         subject.setHeadTeacher(head);
