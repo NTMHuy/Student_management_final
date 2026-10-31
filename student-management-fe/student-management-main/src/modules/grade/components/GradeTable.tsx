@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { GradeField, StudentGradeRecord } from '../types';
 
 interface GradeTableProps {
@@ -15,14 +15,35 @@ const ScoreInput: React.FC<{
   label: string;
   disabled?: boolean;
   onChange: (value: string) => void;
-}> = ({ value, label, disabled, onChange }) => (
-  <input
-    type="number" min="0" max="10" step="0.01" inputMode="decimal"
-    aria-label={label} disabled={disabled} value={value ?? ''}
-    onChange={(e) => onChange(e.target.value)}
-    className="w-20 h-10 text-center font-mono text-xs rounded-xl bg-surface-container-low focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:outline-none font-semibold disabled:opacity-50"
-  />
-);
+}> = ({ value, label, disabled, onChange }) => {
+  const [text, setText] = useState(value === null ? '' : String(value));
+  useEffect(() => {
+    setText(value === null ? '' : String(value));
+  }, [value]);
+  const commit = () => {
+    const clean = text.replace(',', '.').trim();
+    if (clean === '') {
+      onChange('');
+      return;
+    }
+    const parsed = Number(clean);
+    if (!Number.isFinite(parsed) || parsed < 0 || parsed > 10 || !/^\\d+(\\.\\d{1,2})?$/.test(clean)) {
+      setText(value === null ? '' : String(value));
+      return;
+    }
+    onChange(clean);
+  };
+  return (
+    <input
+      type="text" inputMode="decimal"
+      aria-label={label} disabled={disabled} value={text}
+      onChange={(e) => setText(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => { if (e.key === 'Enter') (e.currentTarget as HTMLInputElement).blur(); }}
+      className="w-20 h-10 text-center font-mono text-xs rounded-xl bg-surface-container-low focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:outline-none font-semibold disabled:opacity-50"
+    />
+  );
+};
 
 export const GradeTable: React.FC<GradeTableProps> = ({
   records, onCellChange, onAddProcess, viewType = 'all', startIndex = 0, isLocked,
