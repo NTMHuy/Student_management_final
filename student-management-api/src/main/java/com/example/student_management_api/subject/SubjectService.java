@@ -4,6 +4,7 @@ import com.example.student_management_api.auth.Actor;
 import com.example.student_management_api.common.Text;
 import com.example.student_management_api.teacher.Teacher;
 import com.example.student_management_api.teacher.TeacherRepository;
+import java.math.BigDecimal;
 import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -119,6 +120,26 @@ public class SubjectService {
         subject.setPeriodsGrade10(r.grade10Periods());
         subject.setPeriodsGrade11(r.grade11Periods());
         subject.setPeriodsGrade12(r.grade12Periods());
+        BigDecimal processWeight = r.processWeight() != null
+                ? r.processWeight()
+                : (subject.getProcessWeight() == null ? new BigDecimal("30.00") : subject.getProcessWeight());
+        BigDecimal midtermWeight = r.midtermWeight() != null
+                ? r.midtermWeight()
+                : (subject.getMidtermWeight() == null ? new BigDecimal("30.00") : subject.getMidtermWeight());
+        BigDecimal finalWeight = r.finalWeight() != null
+                ? r.finalWeight()
+                : (subject.getFinalWeight() == null ? new BigDecimal("40.00") : subject.getFinalWeight());
+
+        if (processWeight.compareTo(BigDecimal.ZERO) < 0 || processWeight.compareTo(new BigDecimal("100")) > 0
+                || midtermWeight.compareTo(BigDecimal.ZERO) < 0 || midtermWeight.compareTo(new BigDecimal("100")) > 0
+                || finalWeight.compareTo(BigDecimal.ZERO) < 0 || finalWeight.compareTo(new BigDecimal("100")) > 0
+                || processWeight.add(midtermWeight).add(finalWeight).compareTo(new BigDecimal("100.00")) != 0) {
+            throw Text.badRequest("Tổng trọng số điểm quá trình, giữa kỳ và cuối kỳ phải bằng 100%");
+        }
+
+        subject.setProcessWeight(processWeight.setScale(2, java.math.RoundingMode.UNNECESSARY));
+        subject.setMidtermWeight(midtermWeight.setScale(2, java.math.RoundingMode.UNNECESSARY));
+        subject.setFinalWeight(finalWeight.setScale(2, java.math.RoundingMode.UNNECESSARY));
         subject.setHeadTeacher(head);
         subject.setDescription(Text.blankToNull(r.description()));
     }
