@@ -1,27 +1,34 @@
 export type GradeRank = 'Giỏi' | 'Khá' | 'Đạt' | 'Chưa đạt';
+export type GradeViewType = 'all' | 'process' | 'exam';
 
-export type GradeField = 'tx1' | 'tx2' | 'tx3' | 'gk' | 'ck';
+export interface ProcessScore {
+  assessmentNumber: number;
+  score: number | null;
+  note?: string | null;
+}
 
 export interface StudentGradeRecord {
-  /** id học sinh (dạng chuỗi) - khóa của dòng trong bảng điểm */
   id: string;
   studentId: number;
   studentCode: string;
   fullName: string;
   avatarInitials: string;
-  tx1: number | null; // Miệng
-  tx2: number | null; // 15 Phút
-  tx3: number | null; // 1 Tiết
-  gk: number | null;  // Giữa kỳ (x2)
-  ck: number | null;  // Cuối kỳ (x3)
+  processScores: ProcessScore[];
+  midtermScore: number | null;
+  finalScore: number | null;
+  processAverage: number | null;
   avgScore: number | null;
   rank: GradeRank | null;
+  processWeight: number | null;
+  midtermWeight: number | null;
+  finalWeight: number | null;
 }
+
+export type GradeField = `process:${number}` | 'midterm' | 'final';
 
 export interface GradeFiltersState {
   classId: string;
   subjectId: string;
-  /** "<năm học>|<học kỳ>", ví dụ "2025-2026|1" */
   semester: string;
-  viewType: 'all' | 'tx' | 'exam';
+  viewType: GradeViewType;
 }
