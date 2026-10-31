@@ -91,12 +91,12 @@ export default function GradesPage() {
   const { schoolYear, semester } = parseSemester(filters.semester);
 
   const handleExport = () => {
-    const maxProcessCount = Math.max(0, ...records.map((r) => r.processScores.length));
+    const maxProcessCount = Math.max(0, ...records.flatMap((r) => r.processScores.map((item) => item.assessmentNumber)));
     const processHeaders = Array.from({ length: maxProcessCount }, (_, i) => `Quá trình lần ${i + 1}`);
     const header = ['STT', 'Mã SV', 'Họ và tên', ...processHeaders, 'Điểm giữa kỳ', 'Điểm cuối kỳ', 'ĐTB quá trình', 'Điểm tổng kết', 'Xếp loại'];
     const rows = records.map((r, i) => [
       i + 1, r.studentCode, r.fullName,
-      ...Array.from({ length: maxProcessCount }, (_, index) => r.processScores[index]?.score ?? ''),
+      ...Array.from({ length: maxProcessCount }, (_, index) => r.processScores.find((item) => item.assessmentNumber === index + 1)?.score ?? ''),
       r.midtermScore ?? '', r.finalScore ?? '', r.processAverage ?? '', r.avgScore ?? '', r.rank ?? '',
     ]);
     const csv = [header, ...rows]
