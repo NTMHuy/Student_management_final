@@ -190,6 +190,7 @@ export default function GradesPage() {
           <GradeTable
             records={pageRecords}
             onCellChange={handleCellChange}
+            onAddProcess={addProcessAssessment}
             viewType={filters.viewType}
             startIndex={(currentPage - 1) * pageSize}
           />
