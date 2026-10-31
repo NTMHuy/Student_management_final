@@ -132,7 +132,7 @@ export default function AttendancePage() {
               )}
             </div>
             <p className="text-xs sm:text-sm text-on-surface-variant max-w-2xl leading-relaxed">
-              Chọn lớp, ngày và buổi, đánh dấu từng học sinh có mặt, vắng có phép, vắng không phép hoặc đi muộn rồi bấm &quot;Lưu điểm danh&quot;. Học sinh vắng nhiều được cảnh báo ở bên dưới.
+              Chọn lớp, môn học, ngày và buổi; đánh dấu từng sinh viên có mặt, vắng có phép, vắng không phép hoặc đi muộn rồi lưu điểm danh.
             </p>
           </div>
 
@@ -157,7 +157,7 @@ export default function AttendancePage() {
             <button
               type="button"
               onClick={handleSave}
-              disabled={isSaving || isLoading || total === 0 || (!isDirty && pendingCount === 0)}
+              disabled={isSaving || isLoading || total === 0 || !dailyFilters.subjectId || (!isDirty && pendingCount === 0)}
               className="flex items-center gap-2 px-5 py-2.5 bg-primary text-on-primary rounded-xl hover:bg-primary-container shadow hover:shadow-md transition-all text-xs sm:text-sm font-semibold cursor-pointer disabled:opacity-50"
             >
               <Save className="w-4 h-4" />
@@ -169,7 +169,7 @@ export default function AttendancePage() {
         {optionsError && <p role="alert" className="rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700">{optionsError}</p>}
         {noClass && (
           <p className="rounded-xl bg-surface-container-low border border-outline-variant/30 px-4 py-3 text-sm text-on-surface-variant">
-            Bạn chưa chủ nhiệm hoặc được phân công lớp nào nên chưa thể điểm danh. Hãy nhờ quản trị viên phân công.
+            Bạn chưa được phân công dạy lớp/môn nào nên chưa thể điểm danh. Hãy nhờ quản trị viên phân công.
           </p>
         )}
 
@@ -212,14 +212,14 @@ export default function AttendancePage() {
             </select>
           </div>
           <div className="flex flex-col gap-1">
-            <label htmlFor="att-subject" className="text-xs font-semibold text-on-surface-variant">Môn học (tùy chọn)</label>
+            <label htmlFor="att-subject" className="text-xs font-semibold text-on-surface-variant">Môn học <span className="text-error">*</span></label>
             <select
               id="att-subject"
               value={dailyFilters.subjectId}
               onChange={(e) => changeFilters({ subjectId: e.target.value })}
               className="px-3 py-2 bg-surface-container-low border border-outline-variant/30 rounded-xl text-xs sm:text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-secondary/40 font-medium"
             >
-              <option value="">Không theo môn</option>
+              <option value="">Chọn môn học</option>
               {subjectOptions.map((s) => (
                 <option key={s.id} value={s.id}>{s.name}</option>
               ))}
