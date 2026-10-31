@@ -25,6 +25,9 @@ function toRequest(data: SubjectFormData, current?: SubjectApiResponse) {
     grade10Periods: Number(data.grade10Periods),
     grade11Periods: Number(data.grade11Periods),
     grade12Periods: Number(data.grade12Periods),
+    processWeight: Number(data.processWeight),
+    midtermWeight: Number(data.midtermWeight),
+    finalWeight: Number(data.finalWeight),
     description: data.description ?? current?.description ?? "",
     // SubjectResponse explicitly returns headTeacherId. Preserve it on edit instead
     // of silently clearing the relation when the subject is saved.
