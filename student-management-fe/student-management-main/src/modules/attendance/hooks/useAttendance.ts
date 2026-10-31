@@ -31,7 +31,7 @@ export const useAttendance = () => {
 
   const classOptions = options.classes;
 
-  // Môn gợi ý (tùy chọn): giáo viên chỉ thấy môn được phân công ở lớp đã chọn.
+  // Môn được phép điểm danh: giáo viên chỉ thấy môn được phân công ở lớp đã chọn.
   const subjectOptions = useMemo(() => {
     if (!options.restricted) return options.subjects;
     const classId = Number(dailyFilters.classId);
@@ -47,13 +47,15 @@ export const useAttendance = () => {
         : classOptions[0]
           ? String(classOptions[0].id)
           : '';
-      const subjectId = subjectOptions.some((s) => String(s.id) === prev.subjectId) ? prev.subjectId : '';
+      const subjectId = subjectOptions.some((s) => String(s.id) === prev.subjectId)
+        ? prev.subjectId
+        : subjectOptions[0] ? String(subjectOptions[0].id) : '';
       return classId === prev.classId && subjectId === prev.subjectId ? prev : { ...prev, classId, subjectId };
     });
   }, [optionsLoading, classOptions, subjectOptions]);
 
   const fetchDaily = useCallback(async () => {
-    if (!dailyFilters.classId || !dailyFilters.date) {
+    if (!dailyFilters.classId || !dailyFilters.subjectId || !dailyFilters.date) {
       setDailyItems([]);
       return;
     }
@@ -102,6 +104,9 @@ export const useAttendance = () => {
   };
 
   const saveDaily = async () => {
+    if (!dailyFilters.classId || !dailyFilters.subjectId) {
+      throw new Error('Vui lòng chọn lớp và môn học trước khi lưu điểm danh.');
+    }
     setIsSaving(true);
     try {
       const saved = await attendanceService.saveDailyAttendance(dailyFilters, dailyItems);
