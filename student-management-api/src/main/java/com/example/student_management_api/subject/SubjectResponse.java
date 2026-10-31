@@ -1,6 +1,7 @@
 package com.example.student_management_api.subject;
 
 import com.example.student_management_api.common.Text;
+import java.math.BigDecimal;
 
 /** Khớp kiểu Subject của giao diện. weeklyPeriods và coefficient được suy ra từ dữ liệu. */
 public record SubjectResponse(
@@ -15,7 +16,10 @@ public record SubjectResponse(
         String headTeacher,
         String headTeacherId,
         String status,
-        String description) {
+        String description,
+        BigDecimal processWeight,
+        BigDecimal midtermWeight,
+        BigDecimal finalWeight) {
 
     public record PeriodsByGrade(int grade10, int grade11, int grade12) {
     }
@@ -37,6 +41,9 @@ public record SubjectResponse(
                 s.getHeadTeacher() == null ? "" : s.getHeadTeacher().getFullName(),
                 s.getHeadTeacher() == null ? null : String.valueOf(s.getHeadTeacher().getId()),
                 Text.lower(s.getStatus()),
-                Text.nullToEmpty(s.getDescription()));
+                Text.nullToEmpty(s.getDescription()),
+                s.getProcessWeight(),
+                s.getMidtermWeight(),
+                s.getFinalWeight());
     }
 }
