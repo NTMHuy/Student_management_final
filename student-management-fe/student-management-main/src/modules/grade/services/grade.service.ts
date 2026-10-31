@@ -1,6 +1,6 @@
 import { apiRequest } from "@/lib/api/client";
 import { API_ENDPOINTS } from "@/lib/api/endpoints";
-import { GradeField, GradeFiltersState, ProcessScore, StudentGradeRecord } from "../types";
+import { GradeFiltersState, StudentGradeRecord } from "../types";
 import { initialsOf, parseSemester, rankOf } from "../utils";
 
 interface GradeApiRow {
@@ -83,7 +83,6 @@ export const gradeService = {
   },
 
   async saveAllGrades(filters: GradeFiltersState, records: StudentGradeRecord[]): Promise<void> {
-    const params = query(filters);
     const { schoolYear, semester } = parseSemester(filters.semester);
     await apiRequest<void>(`${API_ENDPOINTS.grades}/batch`, {
       method: "PUT",
