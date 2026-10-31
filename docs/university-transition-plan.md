@@ -144,3 +144,27 @@ Do not silently assume these items:
 - Do not assume the current migration set contains a completed university schema; the current `main` tree must be treated as authoritative and rechecked before writing migrations.
 - Do not commit local configuration, credentials, generated build output, or environment-specific secrets.
 - Do not modify Railway production data during this transition.
+
+
+## 10. Backend implementation progress
+
+The feature branch now contains initial JPA entities and repositories for:
+- Department and major
+- Student class
+- Semester
+- Course section
+- Enrollment
+
+Initial ADMIN-managed CRUD APIs have also been added for:
+- `/api/departments`
+- `/api/majors`
+- `/api/student-classes`
+- `/api/semesters`
+- `/api/course-sections`
+
+These are an initial vertical slice, not a completed backend release. In particular:
+- Student CRUD still contains school-class/homeroom assumptions and must be refactored with backward-compatible handling for legacy records.
+- Enrollment endpoints and transactional capacity enforcement are not implemented yet.
+- Teaching assignment, course-session attendance, and university grade APIs are not implemented yet.
+- The subject entity/API still contains school-specific fields and must be refactored without breaking the legacy schema during transition.
+- Automated compilation, integration tests, and migration validation against PostgreSQL have not yet been run.
