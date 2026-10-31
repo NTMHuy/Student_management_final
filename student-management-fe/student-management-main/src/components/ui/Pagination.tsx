@@ -1,5 +1,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 export interface PaginationProps {
   currentPage: number;
@@ -58,7 +59,7 @@ export const Pagination: React.FC<PaginationProps> = ({
           className="h-8 w-8 rounded-lg flex items-center justify-center text-outline hover:bg-surface-container hover:text-on-surface transition-colors disabled:opacity-30 disabled:pointer-events-none"
           title="Trang trước"
         >
-          <span className="material-symbols-outlined text-[18px]">chevron_left</span>
+          <ChevronLeft className="w-[18px] h-[18px]" />
         </button>
 
         {getPageNumbers().map((page, idx) =>
@@ -88,7 +89,7 @@ export const Pagination: React.FC<PaginationProps> = ({
           className="h-8 w-8 rounded-lg flex items-center justify-center text-outline hover:bg-surface-container hover:text-on-surface transition-colors disabled:opacity-30 disabled:pointer-events-none"
           title="Trang sau"
         >
-          <span className="material-symbols-outlined text-[18px]">chevron_right</span>
+          <ChevronRight className="w-[18px] h-[18px]" />
         </button>
       </div>
     </div>

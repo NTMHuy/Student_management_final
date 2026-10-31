@@ -1,6 +1,6 @@
 import React from 'react';
 import { SchoolClass } from '../types';
-import { Eye, UserPlus, Users, Trash2, MapPin } from 'lucide-react';
+import { Eye, UserPlus, Users, Trash2, MapPin, Loader2 } from 'lucide-react';
 
 interface ClassTableProps {
   classes: SchoolClass[];
@@ -18,9 +18,7 @@ export const ClassTable: React.FC<ClassTableProps> = ({
   if (isLoading) {
     return (
       <div className="bg-surface-container-lowest rounded-2xl p-8 flex flex-col items-center justify-center gap-3">
-        <span className="material-symbols-outlined text-[32px] text-primary animate-spin">
-          progress_activity
-        </span>
+        <Loader2 className="w-[32px] h-[32px] text-primary animate-spin" />
         <p className="text-sm text-on-surface-variant font-medium">Đang tải danh sách lớp học...</p>
       </div>
     );
@@ -76,14 +74,14 @@ export const ClassTable: React.FC<ClassTableProps> = ({
                   <td className="px-4 py-3.5">
                     <div className="flex items-center gap-2.5">
                       <div className="w-8 h-8 rounded-full bg-primary-fixed text-primary font-bold text-xs flex items-center justify-center shrink-0">
-                        {cls.homeroomTeacher.avatarInitials}
+                        {cls.homeroomTeacher.avatarInitials || 'GV'}
                       </div>
                       <div className="flex flex-col min-w-0">
                         <span className="font-semibold text-on-surface leading-tight truncate">
-                          {cls.homeroomTeacher.fullName}
+                          {cls.homeroomTeacher.fullName || 'Chưa phân công'}
                         </span>
                         <span className="text-[11px] text-on-surface-variant truncate">
-                          {cls.homeroomTeacher.department}
+                          {cls.homeroomTeacher.department || '—'}
                         </span>
                       </div>
                     </div>
@@ -119,7 +117,7 @@ export const ClassTable: React.FC<ClassTableProps> = ({
 
                   <td className="px-4 py-3.5 text-center">
                     <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-surface-container-high text-primary">
-                      Đang hoạt động
+                      {cls.status === 'active' ? 'Đang hoạt động' : 'Đã lưu trữ'}
                     </span>
                   </td>
 

@@ -1,0 +1,6 @@
+# File tạm / bản vá / gói nén không thuộc mã nguồn
+*.zip
+*.patch
+fe-dump.txt
+*.log
+.DS_Store

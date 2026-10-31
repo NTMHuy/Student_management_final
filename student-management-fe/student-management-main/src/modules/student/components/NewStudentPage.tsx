@@ -5,13 +5,15 @@ import { Breadcrumb } from '@/components/layout/Breadcrumb';
 import { useRouter } from 'next/navigation';
 import { useStudents } from '@/modules/student/hooks/useStudents';
 import { StudentFormData } from '@/modules/student/types';
-import { GRADE_LEVELS, CLASS_OPTIONS } from '@/modules/student/constants';
+import { GRADE_LEVELS } from '@/modules/student/constants';
+import { useClassOptions } from '@/modules/class/hooks/useClassOptions';
 import { Save, ArrowLeft, UserPlus } from 'lucide-react';
 
 export default function NewStudentPage() {
   const router = useRouter();
   const { createStudent } = useStudents();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const { options: classOptions } = useClassOptions();
 
   const [formData, setFormData] = React.useState<StudentFormData>({
     fullName: '',
@@ -23,6 +25,14 @@ export default function NewStudentPage() {
     phone: '0912 345 678',
     notes: '',
   });
+
+  const classesForGrade = classOptions.filter((c) => c.gradeLevel === Number(formData.gradeLevel));
+  React.useEffect(() => {
+    const valid = classOptions.filter((c) => c.gradeLevel === Number(formData.gradeLevel));
+    if (!valid.some((c) => c.value === formData.className)) {
+      setFormData((prev) => ({ ...prev, className: valid[0]?.value ?? '' }));
+    }
+  }, [classOptions, formData.gradeLevel, formData.className]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -139,7 +149,7 @@ export default function NewStudentPage() {
                 onChange={(e) => setFormData({ ...formData, className: e.target.value })}
                 className="w-full px-3.5 py-2.5 rounded-xl bg-surface-container-low border border-outline-variant/30 text-on-surface text-sm focus:outline-none focus:border-secondary"
               >
-                {CLASS_OPTIONS.map((c) => (
+                {classesForGrade.map((c) => (
                   <option key={c.value} value={c.value}>
                     {c.label}
                   </option>

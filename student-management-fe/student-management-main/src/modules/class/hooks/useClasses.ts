@@ -43,7 +43,7 @@ export const useClasses = (initialFilters?: Partial<ClassFiltersState>) => {
     });
   };
 
-  const assignTeacher = async (classId: string, teacher: SchoolClass['homeroomTeacher']) => {
+  const assignTeacher = async (classId: string, teacher: SchoolClass['homeroomTeacher'] | null) => {
     const updated = await classService.assignTeacher(classId, teacher);
     await fetchClasses();
     return updated;

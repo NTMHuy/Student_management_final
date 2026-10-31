@@ -1,120 +1,87 @@
+import { apiRequest, ApiError } from "@/lib/api/client";
+import { API_ENDPOINTS } from "@/lib/api/endpoints";
 import { Subject, SubjectFiltersState, SubjectFormData } from "../types";
-import { initialSubjects } from "../mocks/subject.mock";
 
-let memorySubjects = [...initialSubjects];
+interface SubjectApiResponse extends Subject {
+  headTeacherId?: string | null;
+}
+
+function toQueryString(filters?: Partial<SubjectFiltersState>): string {
+  const params = new URLSearchParams();
+  if (filters?.search?.trim()) params.set("search", filters.search.trim());
+  if (filters?.department) params.set("department", filters.department);
+  if (filters?.evaluationType) params.set("evaluationType", filters.evaluationType);
+  if (filters?.gradeLevel) params.set("gradeLevel", filters.gradeLevel);
+  const query = params.toString();
+  return query ? `?${query}` : "";
+}
+
+function toRequest(data: SubjectFormData, current?: SubjectApiResponse) {
+  return {
+    subjectCode: data.subjectCode.trim().toUpperCase(),
+    name: data.name.trim(),
+    department: data.department.trim(),
+    evaluationType: data.evaluationType,
+    grade10Periods: Number(data.grade10Periods),
+    grade11Periods: Number(data.grade11Periods),
+    grade12Periods: Number(data.grade12Periods),
+    description: data.description ?? current?.description ?? "",
+    // SubjectResponse explicitly returns headTeacherId. Preserve it on edit instead
+    // of silently clearing the relation when the subject is saved.
+    headTeacherId: current?.headTeacherId ?? null,
+    status: current?.status ?? "active",
+  };
+}
 
 export const subjectService = {
-  async getSubjects(
-    filters?: Partial<SubjectFiltersState>,
-  ): Promise<Subject[]> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        let result = [...memorySubjects];
+  getSubjects(filters?: Partial<SubjectFiltersState>): Promise<Subject[]> {
+    return apiRequest<Subject[]>(`${API_ENDPOINTS.subjects}${toQueryString(filters)}`);
+  },
 
-        if (filters?.search) {
-          const q = filters.search.toLowerCase().trim();
-          result = result.filter(
-            (s) =>
-              s.subjectCode.toLowerCase().includes(q) ||
-              s.name.toLowerCase().includes(q) ||
-              s.department.toLowerCase().includes(q) ||
-              s.headTeacher.toLowerCase().includes(q),
-          );
-        }
+  async getSubject(id: string): Promise<SubjectApiResponse | null> {
+    if (!/^\d+$/.test(id)) return null;
+    try {
+      return await apiRequest<SubjectApiResponse>(
+        `${API_ENDPOINTS.subjects}/${encodeURIComponent(id)}`,
+      );
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 404) return null;
+      throw error;
+    }
+  },
 
-        if (filters?.department) {
-          result = result.filter((s) =>
-            s.department
-              .toLowerCase()
-              .includes(filters.department!.toLowerCase()),
-          );
-        }
-
-        if (filters?.evaluationType) {
-          result = result.filter(
-            (s) => s.evaluationType === filters.evaluationType,
-          );
-        }
-
-        resolve(result);
-      }, 200);
+  createSubject(data: SubjectFormData): Promise<Subject> {
+    return apiRequest<Subject>(API_ENDPOINTS.subjects, {
+      method: "POST",
+      body: toRequest(data),
     });
   },
 
-  async createSubject(data: SubjectFormData): Promise<Subject> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const newSubject: Subject = {
-          id: `sb-${Date.now()}`,
-          subjectCode: data.subjectCode.toUpperCase(),
-          name: data.name,
-          department: data.department,
-          weeklyPeriods: `${data.grade10Periods} / ${data.grade11Periods} / ${data.grade12Periods} tiết`,
-          periodsByGrade: {
-            grade10: Number(data.grade10Periods),
-            grade11: Number(data.grade11Periods),
-            grade12: Number(data.grade12Periods),
-          },
-          coefficient:
-            data.evaluationType === "score"
-              ? "Hệ số 1 (Chính khóa)"
-              : "Đánh giá Đ / CĐ",
-          evaluationType: data.evaluationType,
-          headTeacher: "Đang cập nhật",
-          status: "active",
-          description: data.description,
-        };
+  async updateSubject(id: string, data: SubjectFormData): Promise<Subject | null> {
+    const current = await this.getSubject(id);
+    if (!current) return null;
 
-        memorySubjects = [newSubject, ...memorySubjects];
-        resolve(newSubject);
-      }, 300);
-    });
-  },
-
-  async updateSubject(
-    id: string,
-    data: SubjectFormData,
-  ): Promise<Subject | null> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const index = memorySubjects.findIndex((subject) => subject.id === id);
-        if (index === -1) {
-          resolve(null);
-          return;
-        }
-
-        const existing = memorySubjects[index];
-        const updated: Subject = {
-          ...existing,
-          subjectCode: data.subjectCode.toUpperCase(),
-          name: data.name,
-          department: data.department,
-          weeklyPeriods: `${data.grade10Periods} / ${data.grade11Periods} / ${data.grade12Periods} tiết`,
-          periodsByGrade: {
-            grade10: Number(data.grade10Periods),
-            grade11: Number(data.grade11Periods),
-            grade12: Number(data.grade12Periods),
-          },
-          coefficient:
-            data.evaluationType === "score"
-              ? "Hệ số 1 (Chính khóa)"
-              : "Đánh giá Đ / CĐ",
-          evaluationType: data.evaluationType,
-          description: data.description,
-        };
-
-        memorySubjects[index] = updated;
-        resolve(updated);
-      }, 300);
-    });
+    try {
+      return await apiRequest<Subject>(
+        `${API_ENDPOINTS.subjects}/${encodeURIComponent(id)}`,
+        { method: "PUT", body: toRequest(data, current) },
+      );
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 404) return null;
+      throw error;
+    }
   },
 
   async deleteSubject(id: string): Promise<boolean> {
-    return new Promise((resolve) => {
-      memorySubjects = memorySubjects.filter(
-        (s) => s.id !== id && s.subjectCode !== id,
-      );
-      resolve(true);
-    });
+    if (!/^\d+$/.test(id)) return false;
+    try {
+      await apiRequest<void>(`${API_ENDPOINTS.subjects}/${encodeURIComponent(id)}`, {
+        method: "DELETE",
+      });
+      return true;
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 404) return false;
+      throw error;
+    }
   },
 };

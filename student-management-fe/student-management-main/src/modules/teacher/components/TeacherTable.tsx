@@ -1,6 +1,6 @@
 import React from 'react';
 import { Teacher } from '../types';
-import { Eye, Edit2, Trash2 } from 'lucide-react';
+import { Eye, Edit2, Trash2, Loader2, UserX } from 'lucide-react';
 
 interface TeacherTableProps {
   teachers: Teacher[];
@@ -20,9 +20,7 @@ export const TeacherTable: React.FC<TeacherTableProps> = ({
   if (isLoading) {
     return (
       <div className="bg-surface-container-lowest rounded-2xl p-8 flex flex-col items-center justify-center gap-3">
-        <span className="material-symbols-outlined text-[32px] text-primary animate-spin">
-          progress_activity
-        </span>
+        <Loader2 className="w-[32px] h-[32px] text-primary animate-spin" />
         <p className="text-sm text-on-surface-variant font-medium">Đang tải danh sách giáo viên...</p>
       </div>
     );
@@ -32,7 +30,7 @@ export const TeacherTable: React.FC<TeacherTableProps> = ({
     return (
       <div className="bg-surface-container-lowest rounded-2xl p-12 text-center flex flex-col items-center justify-center gap-3 border border-outline-variant/20">
         <div className="w-12 h-12 rounded-2xl bg-surface-container-low flex items-center justify-center text-outline">
-          <span className="material-symbols-outlined text-[28px]">person_off</span>
+          <UserX className="w-[28px] h-[28px]" />
         </div>
         <h3 className="text-base font-semibold text-on-surface">Không tìm thấy giáo viên</h3>
         <p className="text-xs text-on-surface-variant max-w-sm">

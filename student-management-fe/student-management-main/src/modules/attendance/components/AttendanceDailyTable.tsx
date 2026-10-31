@@ -1,10 +1,11 @@
 import React from 'react';
 import { DailyAttendanceItem, AttendanceStatus } from '../types';
-import { CheckCircle2, FileText, XCircle, Clock, MoreVertical, MessageSquare } from 'lucide-react';
+import { CheckCircle2, FileText, XCircle, Clock } from 'lucide-react';
 
 interface AttendanceDailyTableProps {
   items: DailyAttendanceItem[];
   onStatusChange: (id: string, status: AttendanceStatus) => void;
+  startIndex?: number;
   onNoteChange: (id: string, note: string) => void;
   isLoading?: boolean;
 }
@@ -13,14 +14,13 @@ export const AttendanceDailyTable: React.FC<AttendanceDailyTableProps> = ({
   items,
   onStatusChange,
   onNoteChange,
+  startIndex = 0,
   isLoading,
 }) => {
   if (isLoading) {
     return (
       <div className="bg-surface-container-lowest rounded-2xl p-8 flex flex-col items-center justify-center gap-3">
-        <span className="material-symbols-outlined text-[32px] text-primary animate-spin">
-          progress_activity
-        </span>
+        <span className="w-8 h-8 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
         <p className="text-sm text-on-surface-variant font-medium">Đang tải sổ điểm danh...</p>
       </div>
     );
@@ -36,14 +36,19 @@ export const AttendanceDailyTable: React.FC<AttendanceDailyTableProps> = ({
               <th className="py-2.5 px-4 w-28 font-semibold">Mã HS</th>
               <th className="py-2.5 px-4 min-w-[200px] font-semibold">Họ và tên</th>
               <th className="py-2.5 px-4 min-w-[340px] text-center font-semibold">Trạng thái chuyên cần</th>
-              <th className="py-2.5 px-4 w-32 text-center font-semibold">Giờ vào lớp</th>
-              <th className="py-2.5 px-4 min-w-[220px] font-semibold">Lý do / Ghi chú</th>
-              <th className="py-2.5 px-4 w-16 text-center font-semibold">Thao tác</th>
-            </tr>
+                            <th className="py-2.5 px-4 min-w-[220px] font-semibold">Lý do / Ghi chú</th>
+                          </tr>
           </thead>
           <tbody className="divide-y divide-outline-variant/15 text-sm text-on-surface">
+            {items.length === 0 && (
+              <tr>
+                <td colSpan={5} className="py-10 text-center text-sm text-on-surface-variant">
+                  Lớp này chưa có học sinh đang theo học.
+                </td>
+              </tr>
+            )}
             {items.map((item, index) => {
-              const indexStr = (index + 1).toString().padStart(2, '0');
+              const indexStr = (startIndex + index + 1).toString().padStart(2, '0');
               const isUnexcused = item.status === 'unexcused';
               const isExcused = item.status === 'excused';
               const isLate = item.status === 'late';
@@ -81,21 +86,6 @@ export const AttendanceDailyTable: React.FC<AttendanceDailyTableProps> = ({
                         <span className="font-semibold text-on-surface truncate group-hover:text-primary transition-colors">
                           {item.fullName}
                         </span>
-                        {item.roleSubtitle && (
-                          <span
-                            className={`text-[11px] truncate ${
-                              isUnexcused
-                                ? 'text-error font-medium'
-                                : isExcused
-                                ? 'text-tertiary font-medium'
-                                : isLate
-                                ? 'text-surface-tint font-medium'
-                                : 'text-outline'
-                            }`}
-                          >
-                            {item.roleSubtitle}
-                          </span>
-                        )}
                       </div>
                     </div>
                   </td>
@@ -161,23 +151,6 @@ export const AttendanceDailyTable: React.FC<AttendanceDailyTableProps> = ({
                     </div>
                   </td>
 
-                  {/* Giờ vào lớp */}
-                  <td className="px-4 text-center font-mono text-xs">
-                    {item.checkInTime === 'Chưa vào' ? (
-                      <span className="px-2 py-0.5 rounded-full bg-error-container text-error font-semibold">
-                        Chưa vào
-                      </span>
-                    ) : item.checkInTime === 'Nghỉ cả ngày' ? (
-                      <span className="px-2 py-0.5 rounded-full bg-surface-container text-outline">
-                        Nghỉ cả ngày
-                      </span>
-                    ) : isLate ? (
-                      <span className="font-bold text-secondary">{item.checkInTime}</span>
-                    ) : (
-                      <span className="text-outline">{item.checkInTime}</span>
-                    )}
-                  </td>
-
                   {/* Ghi chú / lý do */}
                   <td className="px-4">
                     <div className="flex items-center gap-2">
@@ -192,29 +165,9 @@ export const AttendanceDailyTable: React.FC<AttendanceDailyTableProps> = ({
                             : 'bg-transparent hover:bg-surface-container-low focus:bg-surface-container-low text-on-surface'
                         }`}
                       />
-                      {isUnexcused && (
-                        <button
-                          type="button"
-                          onClick={() => alert(`Gửi SMS nhắc nhở phụ huynh em ${item.fullName}`)}
-                          className="p-1 rounded text-error hover:bg-error-container/30 transition-colors cursor-pointer shrink-0"
-                          title="Gửi tin nhắn SMS nhắc nhở"
-                        >
-                          <MessageSquare className="w-4 h-4" />
-                        </button>
-                      )}
                     </div>
                   </td>
 
-                  {/* Actions */}
-                  <td className="px-4 text-center">
-                    <button
-                      type="button"
-                      onClick={() => alert(`Học sinh: ${item.fullName} (${item.studentCode})`)}
-                      className="w-8 h-8 rounded-lg hover:bg-surface-container text-outline hover:text-on-surface flex items-center justify-center transition-colors cursor-pointer"
-                    >
-                      <MoreVertical className="w-4 h-4" />
-                    </button>
-                  </td>
                 </tr>
               );
             })}

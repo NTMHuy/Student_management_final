@@ -9,8 +9,10 @@ import {
   LayoutDashboard,
   GraduationCap,
   Users,
+  UserCog,
   School,
   BookOpen,
+  ClipboardList,
   ClipboardCheck,
   CalendarCheck,
   History,
@@ -70,6 +72,16 @@ export const navigationConfig: NavSection[] = [
         href: '/subjects',
         icon: BookOpen,
       },
+      {
+        label: 'Quản lý tài khoản',
+        href: '/users',
+        icon: UserCog,
+      },
+      {
+        label: 'Phân công giảng dạy',
+        href: '/assignments',
+        icon: ClipboardList,
+      },
     ],
   },
   {
@@ -97,7 +109,21 @@ export const navigationConfig: NavSection[] = [
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const pathname = usePathname();
-  const { logout } = useAuth();
+  const { logout, role, isAuthenticated, isLoading } = useAuth();
+
+  const visibleSections = navigationConfig
+    .map((section) => ({
+      ...section,
+      items: section.items.filter((item) => {
+        if (isLoading || !isAuthenticated) return false;
+        if (role === 'admin') return true;
+        // Teachers only need class/student work, grades, attendance and profile settings.
+        return ['/dashboard', '/students', '/classes', '/grades', '/attendance'].some(
+          (href) => item.href === href || (href === '/attendance' && item.href === '/attendance/history'),
+        );
+      }),
+    }))
+    .filter((section) => section.items.length > 0);
 
   const isRouteActive = (href: string) => {
     if (href === '/dashboard') return pathname === '/dashboard' || pathname === '/';
@@ -136,7 +162,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
         {/* Navigation Sections */}
         <div className="p-3 py-4 flex flex-col gap-4">
-          {navigationConfig.map((section, idx) => (
+          {visibleSections.map((section, idx) => (
             <div key={idx} className="flex flex-col gap-1">
               <div className="px-3 py-1">
                 <span className="text-[11px] font-semibold tracking-wider text-outline uppercase">
