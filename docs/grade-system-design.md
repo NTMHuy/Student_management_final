@@ -82,7 +82,8 @@ Schema hiện tại dùng các loại `ORAL`, `FIFTEEN_MIN`, `ONE_PERIOD`, `MIDT
 - Ba loại ORAL/FIFTEEN_MIN/ONE_PERIOD có thể chuyển thành các lần PROCESS riêng; cần đánh lại số thứ tự để tránh trùng số lần.
 - MIDTERM/FINAL cũ có thể có nhiều assessment_number. Migration giữ nguyên tất cả các bản ghi này; API và giao diện mới chỉ sử dụng assessment_number = 1 cho điểm giữa kỳ/cuối kỳ. Các bản ghi có số lần lớn hơn 1 vẫn nằm trong grade_records để đối soát thủ công, không bị tự ý gộp hoặc xóa.
 - Trước khi đưa migration vào production, cần kiểm kê số lượng các bản ghi MIDTERM/FINAL có assessment_number > 1 và lập danh sách đối soát. Không tự ý ghi đè, xóa hoặc lấy trung bình các bản ghi này.
-- Điểm trung bình/xếp loại cũ trước đây được tính ở frontend, không được lưu thành kết quả tổng kết trong database. Migration không thể tạo snapshot chính xác cho kết quả lịch sử đó; grade_results chỉ được tạo từ lúc mô hình mới vận hành và khi đủ ba thành phần.
+- Với các bộ điểm cũ có đủ TX1, TX2, TX3, GK và CK (assessment_number = 1), migration tạo snapshot trong grade_results theo đúng công thức cũ. Snapshot dùng trọng số tương đương 37.50% quá trình, 25.00% giữa kỳ, 37.50% cuối kỳ để giữ nguyên kết quả cũ; đây là ngoại lệ lịch sử, không phải cấu hình trọng số hiện tại của môn học.
+- Các bộ điểm cũ chưa đủ cả năm cột không được tự tạo điểm tổng kết. Sau khi mô hình mới vận hành, grade_results được tạo khi đủ PROCESS, MIDTERM và FINAL.
 - Migration phải chạy theo hướng không mất dữ liệu; sao lưu và kiểm tra số lượng bản ghi trước/sau.
 - Không chạy migration trên Railway production trong giai đoạn thiết kế.
 
