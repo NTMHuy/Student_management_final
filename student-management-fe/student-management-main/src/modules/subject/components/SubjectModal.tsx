@@ -54,6 +54,9 @@ export const SubjectModal: React.FC<SubjectModalProps> = ({
         grade10Periods: 2,
         grade11Periods: 2,
         grade12Periods: 2,
+        processWeight: 30,
+        midtermWeight: 30,
+        finalWeight: 40,
         description: '',
       });
     }
