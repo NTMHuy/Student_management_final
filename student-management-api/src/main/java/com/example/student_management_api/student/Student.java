@@ -1,6 +1,7 @@
 package com.example.student_management_api.student;
 
 import com.example.student_management_api.common.Gender;
+import com.example.student_management_api.schoolclass.SchoolClass;
 import com.example.student_management_api.studentclass.StudentClass;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -45,6 +46,14 @@ public class Student {
     @JoinColumn(name = "student_class_id", nullable = false)
     private StudentClass studentClass;
 
+    /**
+     * Quan hệ tương thích tạm thời với module quản lý lớp phổ thông cũ.
+     * Sinh viên đại học sử dụng studentClass; không gán đồng thời schoolClass.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "class_id")
+    private SchoolClass schoolClass;
+
     @Column(length = 255)
     private String email;
 
@@ -82,6 +91,9 @@ public class Student {
 
     public StudentClass getStudentClass() { return studentClass; }
     public void setStudentClass(StudentClass studentClass) { this.studentClass = studentClass; }
+
+    public SchoolClass getSchoolClass() { return schoolClass; }
+    public void setSchoolClass(SchoolClass schoolClass) { this.schoolClass = schoolClass; }
 
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
