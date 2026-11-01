@@ -33,10 +33,10 @@ public class StudentController {
     public List<StudentResponse> list(
             @AuthenticationPrincipal Jwt jwt,
             @RequestParam(required = false) String search,
-            @RequestParam(required = false) String gradeLevel,
-            @RequestParam(required = false) String className,
+            @RequestParam(required = false) Long studentClassId,
+            @RequestParam(required = false) Long majorId,
             @RequestParam(required = false) String status) {
-        return service.list(actors.from(jwt), search, gradeLevel, className, status);
+        return service.list(actors.from(jwt), search, studentClassId, majorId, status);
     }
 
     @GetMapping("/{id}")
