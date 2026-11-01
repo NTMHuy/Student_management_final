@@ -2,16 +2,18 @@ package com.example.student_management_api.student;
 
 import com.example.student_management_api.common.Text;
 
-/** Khớp kiểu Student của giao diện. */
+/** Response hồ sơ sinh viên đại học. */
 public record StudentResponse(
         String id,
         String studentCode,
         String fullName,
         String dateOfBirth,
         String gender,
-        int gradeLevel,
-        String className,
-        String parentEmail,
+        Long studentClassId,
+        String studentClassCode,
+        String studentClassName,
+        String majorName,
+        String email,
         String phone,
         String notes,
         String status,
@@ -24,12 +26,14 @@ public record StudentResponse(
                 s.getFullName(),
                 s.getDateOfBirth().toString(),
                 Text.lower(s.getGender()),
-                s.getSchoolClass().getGradeLevel(),
-                s.getSchoolClass().getClassName(),
-                Text.nullToEmpty(s.getParentEmail()),
+                s.getStudentClass().getId(),
+                s.getStudentClass().getClassCode(),
+                s.getStudentClass().getClassName(),
+                s.getStudentClass().getMajor().getName(),
+                Text.nullToEmpty(s.getEmail()),
                 Text.nullToEmpty(s.getPhone()),
                 Text.nullToEmpty(s.getNotes()),
                 Text.lower(s.getStatus()),
-                Text.initials(s.getFullName(), "HS"));
+                Text.initials(s.getFullName(), "SV"));
     }
 }
