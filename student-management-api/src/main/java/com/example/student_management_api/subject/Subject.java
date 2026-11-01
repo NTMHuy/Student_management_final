@@ -1,6 +1,6 @@
 package com.example.student_management_api.subject;
 
-import com.example.student_management_api.teacher.Teacher;
+import com.example.student_management_api.department.Department;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -20,8 +20,6 @@ import org.hibernate.annotations.UpdateTimestamp;
 @Table(name = "subjects")
 public class Subject {
 
-    public enum EvaluationType { SCORE, EVALUATION }
-
     public enum Status { ACTIVE, INACTIVE }
 
     @Id
@@ -34,25 +32,12 @@ public class Subject {
     @Column(nullable = false, length = 100)
     private String name;
 
-    @Column(nullable = false, length = 100)
-    private String department;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "evaluation_type", nullable = false, length = 20)
-    private EvaluationType evaluationType = EvaluationType.SCORE;
-
-    @Column(name = "periods_grade10", nullable = false)
-    private Integer periodsGrade10 = 0;
-
-    @Column(name = "periods_grade11", nullable = false)
-    private Integer periodsGrade11 = 0;
-
-    @Column(name = "periods_grade12", nullable = false)
-    private Integer periodsGrade12 = 0;
-
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "head_teacher_id")
-    private Teacher headTeacher;
+    @JoinColumn(name = "department_id")
+    private Department department;
+
+    @Column(name = "credits")
+    private Short credits;
 
     @Column(columnDefinition = "TEXT")
     private String description;
@@ -77,23 +62,11 @@ public class Subject {
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
 
-    public String getDepartment() { return department; }
-    public void setDepartment(String department) { this.department = department; }
+    public Department getDepartment() { return department; }
+    public void setDepartment(Department department) { this.department = department; }
 
-    public EvaluationType getEvaluationType() { return evaluationType; }
-    public void setEvaluationType(EvaluationType evaluationType) { this.evaluationType = evaluationType; }
-
-    public Integer getPeriodsGrade10() { return periodsGrade10; }
-    public void setPeriodsGrade10(Integer periodsGrade10) { this.periodsGrade10 = periodsGrade10; }
-
-    public Integer getPeriodsGrade11() { return periodsGrade11; }
-    public void setPeriodsGrade11(Integer periodsGrade11) { this.periodsGrade11 = periodsGrade11; }
-
-    public Integer getPeriodsGrade12() { return periodsGrade12; }
-    public void setPeriodsGrade12(Integer periodsGrade12) { this.periodsGrade12 = periodsGrade12; }
-
-    public Teacher getHeadTeacher() { return headTeacher; }
-    public void setHeadTeacher(Teacher headTeacher) { this.headTeacher = headTeacher; }
+    public Short getCredits() { return credits; }
+    public void setCredits(Short credits) { this.credits = credits; }
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
