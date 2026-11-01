@@ -8,11 +8,11 @@ import org.springframework.data.repository.query.Param;
 
 public interface SubjectRepository extends JpaRepository<Subject, Long> {
 
-    @Query("select s from Subject s left join fetch s.headTeacher order by s.subjectCode")
-    List<Subject> findAllWithHeadTeacher();
+    @Query("select s from Subject s left join fetch s.department order by s.subjectCode")
+    List<Subject> findAllWithDepartment();
 
-    @Query("select s from Subject s left join fetch s.headTeacher where s.id = :id")
-    Optional<Subject> findWithHeadTeacherById(@Param("id") Long id);
+    @Query("select s from Subject s left join fetch s.department where s.id = :id")
+    Optional<Subject> findWithDepartmentById(@Param("id") Long id);
 
     Optional<Subject> findBySubjectCodeIgnoreCase(String subjectCode);
 }
