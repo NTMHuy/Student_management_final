@@ -32,10 +32,9 @@ public class SubjectController {
     @GetMapping
     public List<SubjectResponse> list(
             @RequestParam(required = false) String search,
-            @RequestParam(required = false) String department,
-            @RequestParam(required = false) String evaluationType,
-            @RequestParam(required = false) String gradeLevel) {
-        return service.list(search, department, evaluationType, gradeLevel);
+            @RequestParam(required = false) Long departmentId,
+            @RequestParam(required = false) String status) {
+        return service.list(search, departmentId, status);
     }
 
     @GetMapping("/{id}")
