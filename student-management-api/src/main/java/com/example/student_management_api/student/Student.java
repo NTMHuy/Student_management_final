@@ -1,7 +1,7 @@
 package com.example.student_management_api.student;
 
 import com.example.student_management_api.common.Gender;
-import com.example.student_management_api.schoolclass.SchoolClass;
+import com.example.student_management_api.studentclass.StudentClass;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -42,11 +42,11 @@ public class Student {
     private Gender gender;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "class_id", nullable = false)
-    private SchoolClass schoolClass;
+    @JoinColumn(name = "student_class_id", nullable = false)
+    private StudentClass studentClass;
 
-    @Column(name = "parent_email", length = 255)
-    private String parentEmail;
+    @Column(length = 255)
+    private String email;
 
     @Column(length = 20)
     private String phone;
@@ -80,11 +80,11 @@ public class Student {
     public Gender getGender() { return gender; }
     public void setGender(Gender gender) { this.gender = gender; }
 
-    public SchoolClass getSchoolClass() { return schoolClass; }
-    public void setSchoolClass(SchoolClass schoolClass) { this.schoolClass = schoolClass; }
+    public StudentClass getStudentClass() { return studentClass; }
+    public void setStudentClass(StudentClass studentClass) { this.studentClass = studentClass; }
 
-    public String getParentEmail() { return parentEmail; }
-    public void setParentEmail(String parentEmail) { this.parentEmail = parentEmail; }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
 
     public String getPhone() { return phone; }
     public void setPhone(String phone) { this.phone = phone; }
@@ -96,4 +96,5 @@ public class Student {
     public void setStatus(Status status) { this.status = status; }
 
     public Instant getCreatedAt() { return createdAt; }
+    public Instant getUpdatedAt() { return updatedAt; }
 }
