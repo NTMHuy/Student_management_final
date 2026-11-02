@@ -1,5 +1,2 @@
-import SubjectsPage from '@/modules/subject/components/SubjectsPage';
-
-export default function Page({ params }: { params?: { id: string } }) {
-  return <SubjectsPage initialEditingId={params?.id} />;
-}
+import {redirect} from 'next/navigation';
+export default function Page(){redirect('/subjects');}
