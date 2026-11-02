@@ -53,22 +53,22 @@ export const navigationConfig: NavSection[] = [
     title: 'QUẢN LÝ',
     items: [
       {
-        label: 'Học sinh',
+        label: 'Sinh viên',
         href: '/students',
         icon: GraduationCap,
       },
       {
-        label: 'Giáo viên',
+        label: 'Giảng viên',
         href: '/teachers',
         icon: Users,
       },
       {
-        label: 'Lớp học',
+        label: 'Lớp sinh viên',
         href: '/classes',
         icon: School,
       },
       {
-        label: 'Môn học',
+        label: 'Môn học phần',
         href: '/subjects',
         icon: BookOpen,
       },
@@ -145,7 +145,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                 EduManage
               </span>
               <span className="text-[11px] font-medium text-on-surface-variant truncate tracking-wider uppercase">
-                Quản Lý Trường Học
+                Quản Lý Sinh Viên
               </span>
             </div>
           </div>
