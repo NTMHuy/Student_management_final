@@ -33,7 +33,7 @@ export const AttendanceDailyTable: React.FC<AttendanceDailyTableProps> = ({
           <thead>
             <tr className="bg-surface-container-low/70 h-10 text-on-surface-variant text-[11px] font-semibold uppercase tracking-wider select-none">
               <th className="py-2.5 px-4 w-12 text-center font-semibold">STT</th>
-              <th className="py-2.5 px-4 w-28 font-semibold">Mã HS</th>
+              <th className="py-2.5 px-4 w-28 font-semibold">Mã sinh viên</th>
               <th className="py-2.5 px-4 min-w-[200px] font-semibold">Họ và tên</th>
               <th className="py-2.5 px-4 min-w-[340px] text-center font-semibold">Trạng thái chuyên cần</th>
                             <th className="py-2.5 px-4 min-w-[220px] font-semibold">Lý do / Ghi chú</th>
@@ -43,7 +43,7 @@ export const AttendanceDailyTable: React.FC<AttendanceDailyTableProps> = ({
             {items.length === 0 && (
               <tr>
                 <td colSpan={5} className="py-10 text-center text-sm text-on-surface-variant">
-                  Lớp này chưa có học sinh đang theo học.
+                  Lớp học phần này chưa có sinh viên đăng ký.
                 </td>
               </tr>
             )}
@@ -71,7 +71,7 @@ export const AttendanceDailyTable: React.FC<AttendanceDailyTableProps> = ({
                     {indexStr}
                   </td>
 
-                  {/* Mã HS */}
+                  {/* Mã sinh viên */}
                   <td className="px-4 font-mono text-xs font-semibold text-primary">
                     {item.studentCode}
                   </td>
