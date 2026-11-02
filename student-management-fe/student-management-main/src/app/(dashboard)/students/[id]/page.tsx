@@ -1,5 +1,2 @@
-import StudentDetailPage from '@/modules/student/components/StudentDetailPage';
-
-export default function Page({ params }: { params?: { id: string } }) {
-  return <StudentDetailPage params={params} />;
-}
+import {redirect} from 'next/navigation';
+export default function Page(){redirect('/students');}
