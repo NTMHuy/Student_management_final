@@ -1,5 +1,2 @@
-import NewSubjectPage from '@/modules/subject/components/NewSubjectPage';
-
-export default function Page() {
-  return <NewSubjectPage />;
-}
+import {redirect} from 'next/navigation';
+export default function Page(){redirect('/subjects');}
