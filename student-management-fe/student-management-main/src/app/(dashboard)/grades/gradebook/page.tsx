@@ -1,5 +1,2 @@
-import GradesPage from '@/modules/grade/components/GradesPage';
-
-export default function Page() {
-  return <GradesPage />;
-}
+import {redirect} from 'next/navigation';
+export default function Page(){redirect('/grades');}
