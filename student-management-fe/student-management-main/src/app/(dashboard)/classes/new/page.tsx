@@ -1,5 +1,2 @@
-import NewClassPage from '@/modules/class/components/NewClassPage';
-
-export default function Page() {
-  return <NewClassPage />;
-}
+import {redirect} from 'next/navigation';
+export default function Page(){redirect('/classes');}
