@@ -151,7 +151,7 @@ public class GradeController {
     }
 
     private void validateComponent(String type, Integer attempt) {
-        if (!List.of("PROCESS","MIDTERM","FINAL").contains(type)) {
+        if (type == null || !List.of("PROCESS","MIDTERM","FINAL").contains(type)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Thành phần điểm không hợp lệ");
         }
         if (attempt == null || attempt < 1 || (!"PROCESS".equals(type) && attempt != 1)) {
