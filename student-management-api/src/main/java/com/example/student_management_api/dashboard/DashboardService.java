@@ -20,6 +20,7 @@ public class DashboardService {
   Long teachers=admin?jdbc.queryForObject("SELECT count(*) FROM teachers",Long.class):null;
   Long departments=admin?jdbc.queryForObject("SELECT count(*) FROM departments",Long.class):null;
   String classScope=admin?"":" AND EXISTS (SELECT 1 FROM students s WHERE s.student_class_id=sc.id AND EXISTS (SELECT 1 FROM enrollments e JOIN teaching_assignments ta ON ta.course_section_id=e.course_section_id WHERE e.student_id=s.id AND ta.teacher_id=?))";
+  long totalClasses=admin?jdbc.queryForObject("SELECT count(*) FROM student_classes",Long.class):jdbc.queryForObject("SELECT count(*) FROM student_classes sc WHERE EXISTS (SELECT 1 FROM students s JOIN enrollments e ON e.student_id=s.id JOIN teaching_assignments ta ON ta.course_section_id=e.course_section_id WHERE s.student_class_id=sc.id AND ta.teacher_id=?)",Long.class,teacherId);
   List<DashboardResponse.StudentClassRow> classes=jdbc.query("""
    SELECT sc.id,sc.class_code,sc.class_name,m.name major_name,d.name department_name,sc.intake_year,
     (SELECT count(*) FROM students s WHERE s.student_class_id=sc.id) student_count
@@ -36,7 +37,7 @@ public class DashboardService {
    """+recentScope+" ORDER BY s.created_at DESC LIMIT 5",
    (rs,n)->new DashboardResponse.RecentStudent(String.valueOf(rs.getLong("id")),rs.getString("student_code"),rs.getString("full_name"),rs.getString("class_name"),rs.getTimestamp("created_at")==null?"":rs.getTimestamp("created_at").toInstant().toString()),
    admin?new Object[]{}:new Object[]{teacherId});
-  return new DashboardResponse(total,teachers,departments,classes.size(),new DashboardResponse.StudentsByStatus(active,suspended,transferred),classes,recent);
+  return new DashboardResponse(total,teachers,departments,totalClasses,new DashboardResponse.StudentsByStatus(active,suspended,transferred),classes,recent);
  }
  private long countStatus(String status,String scope,Object[] args){
   String sql="SELECT count(*) FROM students s WHERE s.student_class_id IS NOT NULL AND s.status=?"+scope;
