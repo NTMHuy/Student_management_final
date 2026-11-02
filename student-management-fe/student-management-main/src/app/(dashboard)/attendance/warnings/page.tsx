@@ -1,5 +1,2 @@
-import AttendancePage from '@/modules/attendance/components/AttendancePage';
-
-export default function Page() {
-  return <AttendancePage />;
-}
+import {redirect} from 'next/navigation';
+export default function Page(){redirect('/attendance');}
