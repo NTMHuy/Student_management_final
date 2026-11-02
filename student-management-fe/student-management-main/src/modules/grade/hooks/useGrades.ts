@@ -32,7 +32,7 @@ export const useGrades=()=>{
   }));
  };
  const addProcessAttempt=(enrollmentId:number)=>{
-  setIsDirty(true);setRecords(prev=>prev.map(r=>r.enrollmentId!==enrollmentId?r:{...r,scores:[...r.scores,{id:null,componentType:"PROCESS",attemptNumber:Math.max(0,...r.scores.filter(s=>s.componentType==="PROCESS").map(s=>s.attemptNumber))+1,score:null,note:null}]}));
+  setIsDirty(true);setRecords(prev=>prev.map(r=>r.enrollmentId!==enrollmentId?r:{...r,scores:[...r.scores,{id:null,componentType:"PROCESS" as const,attemptNumber:Math.max(0,...r.scores.filter(s=>s.componentType==="PROCESS").map(s=>s.attemptNumber))+1,score:null,note:null}]}));
  };
  const saveGrades=async()=>{setIsSaving(true);try{await gradeService.saveAllGrades(filters,records);setIsDirty(false);await fetchRecords()}finally{setIsSaving(false)}};
  const completedCount=records.filter(r=>r.totalScore!==null).length;
