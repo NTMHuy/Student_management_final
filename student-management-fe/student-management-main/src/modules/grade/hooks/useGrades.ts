@@ -1,141 +1,42 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
-import { StudentGradeRecord, GradeFiltersState, GradeField } from "../types";
+import { useState,useEffect,useCallback } from "react";
+import { GradeComponent,GradeFiltersState,StudentGradeRecord } from "../types";
 import { gradeService } from "../services/grade.service";
-import { calculateAverage, defaultSemester } from "../utils";
 import { useTeachingOptions } from "@/modules/teaching/hooks/useTeachingOptions";
-
-export const useGrades = () => {
-  const { options, isLoading: optionsLoading, error: optionsError } = useTeachingOptions();
-
-  const [records, setRecords] = useState<StudentGradeRecord[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [isDirty, setIsDirty] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [filters, setFilters] = useState<GradeFiltersState>({
-    classId: "",
-    subjectId: "",
-    semester: defaultSemester(),
-    viewType: "all",
-  });
-
-  // Giáo viên chỉ nhập điểm ở lớp/môn đã được phân công; admin chọn bất kỳ.
-  const classOptions = useMemo(() => {
-    if (!options.restricted) return options.classes;
-    const allowed = new Set(options.pairs.map((p) => p.classId));
-    return options.classes.filter((c) => allowed.has(c.id));
-  }, [options]);
-
-  const subjectOptions = useMemo(() => {
-    if (!options.restricted) return options.subjects;
-    const classId = Number(filters.classId);
-    const allowed = new Set(
-      options.pairs.filter((p) => p.classId === classId).map((p) => p.subjectId),
-    );
-    return options.subjects.filter((s) => allowed.has(s.id));
-  }, [options, filters.classId]);
-
-  // Giữ lựa chọn lớp/môn hợp lệ (chọn mục đầu tiên khi chưa có hoặc không còn hợp lệ).
-  useEffect(() => {
-    if (optionsLoading) return;
-    setFilters((prev) => {
-      const classId = classOptions.some((c) => String(c.id) === prev.classId)
-        ? prev.classId
-        : classOptions[0]
-          ? String(classOptions[0].id)
-          : "";
-      const subjects = options.restricted
-        ? options.subjects.filter((s) =>
-            options.pairs.some((p) => p.classId === Number(classId) && p.subjectId === s.id),
-          )
-        : options.subjects;
-      const subjectId = subjects.some((s) => String(s.id) === prev.subjectId)
-        ? prev.subjectId
-        : subjects[0]
-          ? String(subjects[0].id)
-          : "";
-      return classId === prev.classId && subjectId === prev.subjectId
-        ? prev
-        : { ...prev, classId, subjectId };
-    });
-  }, [optionsLoading, classOptions, options]);
-
-  const fetchRecords = useCallback(async () => {
-    if (!filters.classId || !filters.subjectId) {
-      setRecords([]);
-      return;
-    }
-    setIsLoading(true);
-    setError(null);
-    try {
-      setRecords(await gradeService.getGradeRecords(filters));
-      setIsDirty(false);
-    } catch (e) {
-      setRecords([]);
-      setError(e instanceof Error ? e.message : "Không thể tải bảng điểm.");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [filters.classId, filters.subjectId, filters.semester]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    fetchRecords();
-  }, [fetchRecords]);
-
-  const handleCellChange = (id: string, field: GradeField, valStr: string) => {
-    const clean = valStr.replace(",", ".").trim();
-    let num: number | null = null;
-    if (clean !== "") {
-      num = Number(clean);
-      // Bỏ qua ký tự không phải số hoặc ngoài thang 0-10 (giữ nguyên giá trị cũ).
-      if (Number.isNaN(num) || num < 0 || num > 10) return;
-    }
-    setIsDirty(true);
-    setRecords((prev) =>
-      prev.map((r) => {
-        if (r.id !== id) return r;
-        const updated = { ...r, [field]: num };
-        const { avg, rank } = calculateAverage(updated.tx1, updated.tx2, updated.tx3, updated.gk, updated.ck);
-        return { ...updated, avgScore: avg, rank };
-      }),
-    );
-  };
-
-  const saveGrades = async () => {
-    setIsSaving(true);
-    try {
-      await gradeService.saveAllGrades(filters, records);
-      setIsDirty(false);
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const totalStudents = records.length;
-  const completedCount = records.filter((r) => r.avgScore !== null).length;
-  const validAvgs = records.map((r) => r.avgScore).filter((s): s is number => s !== null);
-  const classAverage = validAvgs.length
-    ? (validAvgs.reduce((a, b) => a + b, 0) / validAvgs.length).toFixed(2)
-    : "--";
-
-  return {
-    options,
-    classOptions,
-    subjectOptions,
-    optionsLoading,
-    optionsError,
-    records,
-    isLoading,
-    isSaving,
-    isDirty,
-    error,
-    filters,
-    setFilters,
-    handleCellChange,
-    saveGrades,
-    refresh: fetchRecords,
-    totalStudents,
-    completedCount,
-    classAverage,
-  };
+export const useGrades=()=>{
+ const {options,isLoading:optionsLoading,error:optionsError}=useTeachingOptions();
+ const sectionOptions=options.courseSections;
+ const [records,setRecords]=useState<StudentGradeRecord[]>([]);
+ const [filters,setFilters]=useState<GradeFiltersState>({courseSectionId:""});
+ const [isLoading,setIsLoading]=useState(false),[isSaving,setIsSaving]=useState(false),[isDirty,setIsDirty]=useState(false),[error,setError]=useState<string|null>(null);
+ useEffect(()=>{if(optionsLoading)return;setFilters(p=>sectionOptions.some(s=>String(s.id)===p.courseSectionId)?p:{courseSectionId:sectionOptions[0]?String(sectionOptions[0].id):""})},[optionsLoading,sectionOptions]);
+ const fetchRecords=useCallback(async()=>{
+  if(!filters.courseSectionId){setRecords([]);return}
+  setIsLoading(true);setError(null);
+  try{setRecords(await gradeService.getGradeRecords(filters));setIsDirty(false)}
+  catch(e){setRecords([]);setError(e instanceof Error?e.message:"Không thể tải bảng điểm.")}
+  finally{setIsLoading(false)}
+ },[filters.courseSectionId]);
+ useEffect(()=>{fetchRecords()},[fetchRecords]);
+ const updateScore=(enrollmentId:number,type:GradeComponent,attempt:number,value:string)=>{
+  const clean=value.replace(",",".").trim(),score=clean===""?null:Number(clean);
+  if(score!==null&&(!Number.isFinite(score)||score<0||score>10))return;
+  setIsDirty(true);
+  setRecords(prev=>prev.map(r=>{
+   if(r.enrollmentId!==enrollmentId)return r;
+   const found=r.scores.some(s=>s.componentType===type&&s.attemptNumber===attempt);
+   const scores=found?r.scores.map(s=>s.componentType===type&&s.attemptNumber===attempt?{...s,score}:s):[...r.scores,{id:null,componentType:type,attemptNumber:attempt,score,note:null}];
+   const process=scores.filter(s=>s.componentType==="PROCESS"&&s.score!==null).map(s=>s.score as number);
+   return {...r,scores,processAverage:process.length?Math.round(process.reduce((a,b)=>a+b,0)/process.length*100)/100:null,
+    midtermScore:scores.find(s=>s.componentType==="MIDTERM")?.score??null,
+    finalScore:scores.find(s=>s.componentType==="FINAL")?.score??null};
+  }));
+ };
+ const addProcessAttempt=(enrollmentId:number)=>{
+  setIsDirty(true);setRecords(prev=>prev.map(r=>r.enrollmentId!==enrollmentId?r:{...r,scores:[...r.scores,{id:null,componentType:"PROCESS",attemptNumber:Math.max(0,...r.scores.filter(s=>s.componentType==="PROCESS").map(s=>s.attemptNumber))+1,score:null,note:null}]}));
+ };
+ const saveGrades=async()=>{setIsSaving(true);try{await gradeService.saveAllGrades(filters,records);setIsDirty(false);await fetchRecords()}finally{setIsSaving(false)}};
+ const completedCount=records.filter(r=>r.totalScore!==null).length;
+ const valid=records.map(r=>r.totalScore).filter((n):n is number=>n!==null);
+ const classAverage=valid.length?(valid.reduce((a,b)=>a+b,0)/valid.length).toFixed(2):"--";
+ return {sectionOptions,optionsLoading,optionsError,records,isLoading,isSaving,isDirty,error,filters,setFilters,updateScore,addProcessAttempt,saveGrades,refresh:fetchRecords,totalStudents:records.length,completedCount,classAverage};
 };
