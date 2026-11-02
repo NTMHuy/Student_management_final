@@ -5,6 +5,8 @@ import com.example.student_management_api.common.Text;
 import com.example.student_management_api.coursesection.CourseSection;
 import com.example.student_management_api.coursesection.CourseSectionRepository;
 import java.util.List;
+import java.util.Comparator;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,15 +15,31 @@ import org.springframework.transaction.annotation.Transactional;
 public class CourseSessionService {
     private final CourseSessionRepository sessions;
     private final CourseSectionRepository sections;
+    private final JdbcTemplate jdbc;
 
-    public CourseSessionService(CourseSessionRepository sessions, CourseSectionRepository sections) {
+    public CourseSessionService(CourseSessionRepository sessions, CourseSectionRepository sections, JdbcTemplate jdbc) {
         this.sessions = sessions;
         this.sections = sections;
+        this.jdbc = jdbc;
     }
 
-    public List<CourseSessionResponse> list(Long courseSectionId) {
+    public List<CourseSessionResponse> list(Actor actor, Long courseSectionId) {
+        if (actor.isAdmin()) {
+            List<CourseSession> rows = courseSectionId == null
+                ? sessions.findAllByOrderBySessionDateAscStartTimeAsc()
+                : sessions.findAllByCourseSectionIdOrderBySessionDateAscStartTimeAsc(courseSectionId);
+            return rows.stream().map(CourseSessionResponse::from).toList();
+        }
+        if (actor.teacherId() == null) return List.of();
+        List<Long> allowedSectionIds = jdbc.queryForList(
+            "SELECT course_section_id FROM teaching_assignments WHERE teacher_id = ?",
+            Long.class, actor.teacherId());
+        if (courseSectionId != null && !allowedSectionIds.contains(courseSectionId)) {
+            throw Text.forbidden("Bạn không được phân công lớp học phần này");
+        }
         List<CourseSession> rows = courseSectionId == null
-            ? sessions.findAllByOrderBySessionDateAscStartTimeAsc()
+            ? sessions.findAllByOrderBySessionDateAscStartTimeAsc().stream()
+                .filter(s -> allowedSectionIds.contains(s.getCourseSection().getId())).toList()
             : sessions.findAllByCourseSectionIdOrderBySessionDateAscStartTimeAsc(courseSectionId);
         return rows.stream().map(CourseSessionResponse::from).toList();
     }
