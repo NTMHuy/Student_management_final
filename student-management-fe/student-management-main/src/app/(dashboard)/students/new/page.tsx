@@ -1,5 +1,2 @@
-import NewStudentPage from '@/modules/student/components/NewStudentPage';
-
-export default function Page() {
-  return <NewStudentPage />;
-}
+import {redirect} from 'next/navigation';
+export default function Page(){redirect('/students');}
