@@ -1,28 +1,35 @@
 export type AttendanceStatus = 'present' | 'excused' | 'unexcused' | 'late';
-export type AttendanceSession = 'MORNING' | 'AFTERNOON';
 
-export const SESSION_LABEL: Record<AttendanceSession, string> = {
-  MORNING: 'Buổi Sáng',
-  AFTERNOON: 'Buổi Chiều',
-};
+export interface CourseSessionOption {
+  id: string;
+  courseSectionId: string;
+  sectionCode: string;
+  subjectCode: string;
+  subjectName: string;
+  sessionDate: string;
+  startTime: string;
+  endTime: string;
+  room: string;
+  status: string;
+}
 
 export interface DailyAttendanceItem {
-  /** id học sinh (dạng chuỗi) - khóa của dòng */
   id: string;
+  enrollmentId: number;
   studentId: number;
   studentCode: string;
   fullName: string;
   avatarLetter: string;
-  /** null = chưa điểm danh */
   status: AttendanceStatus | null;
   note: string;
 }
 
 export interface AttendanceHistoryItem {
   id: string;
-  dateStr: string; // dd/mm/yyyy
-  session: string; // 'Buổi Sáng' | 'Buổi Chiều'
-  className: string;
+  dateStr: string;
+  timeStr: string;
+  sectionCode: string;
+  sectionName: string;
   subjectName: string;
   studentCode: string;
   fullName: string;
@@ -36,7 +43,7 @@ export interface AttendanceEarlyWarning {
   id: string;
   fullName: string;
   studentCode: string;
-  className: string;
+  studentClassName: string;
   totalMissed: number;
   unexcused: number;
   excused: number;
@@ -44,18 +51,14 @@ export interface AttendanceEarlyWarning {
 }
 
 export interface AttendanceFiltersState {
-  classId: string;
-  date: string; // yyyy-mm-dd
-  session: AttendanceSession;
-  /** '' = không theo môn */
-  subjectId: string;
+  courseSectionId: string;
+  courseSessionId: string;
 }
 
 export interface AttendanceHistoryFiltersState {
   search: string;
-  /** '' = tất cả lớp được xem */
-  classId: string;
-  from: string; // yyyy-mm-dd
-  to: string; // yyyy-mm-dd
-  status: string; // 'all' | AttendanceStatus
+  courseSectionId: string;
+  from: string;
+  to: string;
+  status: string;
 }
