@@ -20,9 +20,9 @@ public class CourseSessionController {
     }
 
     @GetMapping
-    public List<CourseSessionResponse> list(
+    public List<CourseSessionResponse> list(@AuthenticationPrincipal Jwt jwt,
         @RequestParam(required = false) Long courseSectionId) {
-        return service.list(courseSectionId);
+        return service.list(actors.from(jwt), courseSectionId);
     }
 
     @GetMapping("/{id}")
