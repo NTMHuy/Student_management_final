@@ -1,25 +1,17 @@
-export interface TeachingClassOption {
+export interface TeachingCourseSectionOption {
   id: number;
-  name: string;
-  gradeLevel: number;
-}
-
-export interface TeachingSubjectOption {
-  id: number;
-  code: string;
-  name: string;
-}
-
-export interface TeachingPair {
-  classId: number;
+  sectionCode: string;
+  sectionName: string;
   subjectId: number;
+  subjectCode: string;
+  subjectName: string;
+  semesterId: number;
+  semesterName: string;
+  status: string;
 }
 
-/** Lớp/môn mà tài khoản hiện tại được phép điểm danh / nhập điểm (lấy từ server). */
 export interface TeachingOptions {
-  /** true = giáo viên (chỉ được lớp/môn đã phân công); false = admin (tất cả). */
+  /** true = teacher sees assigned course sections; false = admin sees all. */
   restricted: boolean;
-  classes: TeachingClassOption[];
-  subjects: TeachingSubjectOption[];
-  pairs: TeachingPair[];
+  courseSections: TeachingCourseSectionOption[];
 }
