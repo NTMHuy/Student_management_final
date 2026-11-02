@@ -1,7 +1,7 @@
 'use client';
 import React,{useEffect,useMemo,useState} from 'react';
 import {apiRequest} from '@/lib/api/client';
-import {Plus,Search,RotateCcw,Trash2,X} from 'lucide-react';
+import {Plus,Search,RotateCcw,Trash2} from 'lucide-react';
 interface Student {id:string;studentCode:string;fullName:string;dateOfBirth:string;gender:string;studentClassId:number;studentClassCode:string;studentClassName:string;majorName:string;email:string;phone:string;status:string}
 interface StudentClass {id:string;classCode:string;className:string;majorName:string}
 export default function StudentsPage(){
