@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { teachingService } from '../services/teaching.service';
 import { TeachingOptions } from '../types';
 
-const EMPTY: TeachingOptions = { restricted: true, classes: [], subjects: [], pairs: [] };
+const EMPTY: TeachingOptions = { restricted: true, courseSections: [] };
 
 export const useTeachingOptions = () => {
   const [options, setOptions] = useState<TeachingOptions>(EMPTY);
@@ -11,20 +11,13 @@ export const useTeachingOptions = () => {
 
   useEffect(() => {
     let active = true;
-    teachingService
-      .getOptions()
-      .then((data) => {
-        if (active) setOptions(data);
-      })
+    teachingService.getOptions()
+      .then((data) => { if (active) setOptions(data); })
       .catch((e: unknown) => {
-        if (active) setError(e instanceof Error ? e.message : 'Không thể tải danh sách lớp/môn.');
+        if (active) setError(e instanceof Error ? e.message : 'Không thể tải lớp học phần.');
       })
-      .finally(() => {
-        if (active) setIsLoading(false);
-      });
-    return () => {
-      active = false;
-    };
+      .finally(() => { if (active) setIsLoading(false); });
+    return () => { active = false; };
   }, []);
 
   return { options, isLoading, error };
