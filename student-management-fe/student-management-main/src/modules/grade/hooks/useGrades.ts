@@ -26,7 +26,7 @@ export const useGrades=()=>{
    const found=r.scores.some(s=>s.componentType===type&&s.attemptNumber===attempt);
    const scores=found?r.scores.map(s=>s.componentType===type&&s.attemptNumber===attempt?{...s,score}:s):[...r.scores,{id:null,componentType:type,attemptNumber:attempt,score,note:null}];
    const process=scores.filter(s=>s.componentType==="PROCESS"&&s.score!==null).map(s=>s.score as number);
-   return {...r,scores,processAverage:process.length?Math.round(process.reduce((a,b)=>a+b,0)/process.length*100)/100:null,
+   return {...r,scores,totalScore:null,processAverage:process.length?Math.round(process.reduce((a,b)=>a+b,0)/process.length*100)/100:null,
     midtermScore:scores.find(s=>s.componentType==="MIDTERM")?.score??null,
     finalScore:scores.find(s=>s.componentType==="FINAL")?.score??null};
   }));
