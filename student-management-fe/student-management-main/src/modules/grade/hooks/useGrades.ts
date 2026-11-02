@@ -1,5 +1,5 @@
 import { useState,useEffect,useCallback } from "react";
-import { GradeComponent,GradeFiltersState,StudentGradeRecord } from "../types";
+import { GradeComponent,GradeFiltersState,GradeScore,StudentGradeRecord } from "../types";
 import { gradeService } from "../services/grade.service";
 import { useTeachingOptions } from "@/modules/teaching/hooks/useTeachingOptions";
 export const useGrades=()=>{
@@ -24,7 +24,7 @@ export const useGrades=()=>{
   setRecords(prev=>prev.map(r=>{
    if(r.enrollmentId!==enrollmentId)return r;
    const found=r.scores.some(s=>s.componentType===type&&s.attemptNumber===attempt);
-   const scores=found?r.scores.map(s=>s.componentType===type&&s.attemptNumber===attempt?{...s,score}:s):[...r.scores,{id:null,componentType:type,attemptNumber:attempt,score,note:null}];
+   const scores:GradeScore[]=found?r.scores.map(s=>s.componentType===type&&s.attemptNumber===attempt?{...s,score}:s):[...r.scores,{id:null,componentType:type,attemptNumber:attempt,score,note:null}];
    const process=scores.filter(s=>s.componentType==="PROCESS"&&s.score!==null).map(s=>s.score as number);
    return {...r,scores,totalScore:null,processAverage:process.length?Math.round(process.reduce((a,b)=>a+b,0)/process.length*100)/100:null,
     midtermScore:scores.find(s=>s.componentType==="MIDTERM")?.score??null,
