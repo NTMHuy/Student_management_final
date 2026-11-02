@@ -1,103 +1,47 @@
 package com.example.student_management_api.dashboard;
-
 import com.example.student_management_api.auth.Actor;
-import com.example.student_management_api.common.Text;
-import com.example.student_management_api.student.Student;
-import com.example.student_management_api.student.StudentRepository;
-import com.example.student_management_api.studentclass.StudentClass;
-import com.example.student_management_api.studentclass.StudentClassRepository;
-import com.example.student_management_api.teacher.TeacherRepository;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 @Service
-@Transactional(readOnly = true)
+@Transactional(readOnly=true)
 public class DashboardService {
-
-    private static final int MAX_CLASS_ROWS = 10;
-    private static final int MAX_RECENT_STUDENTS = 5;
-
-    private final StudentRepository students;
-    private final StudentClassRepository studentClasses;
-    private final TeacherRepository teachers;
-
-    public DashboardService(
-            StudentRepository students,
-            StudentClassRepository studentClasses,
-            TeacherRepository teachers) {
-        this.students = students;
-        this.studentClasses = studentClasses;
-        this.teachers = teachers;
-    }
-
-    public DashboardResponse summary(Actor actor) {
-        // Teaching-assignment based teacher scoping will be added with that module.
-        // Until then, do not expose university-wide student data to teacher accounts.
-        if (!actor.isAdmin()) {
-            return new DashboardResponse(
-                    0, null, null, 0,
-                    new DashboardResponse.ClassesByGrade(0, 0, 0),
-                    new DashboardResponse.StudentsByStatus(0, 0, 0),
-                    List.of(), List.of());
-        }
-
-        List<Student> allStudents = students.findAllByOrderByStudentCode();
-        List<StudentClass> allStudentClasses = studentClasses.findAll();
-
-        Map<Long, Long> countByStudentClass = allStudents.stream()
-                .filter(student -> student.getStudentClass() != null)
-                .collect(Collectors.groupingBy(
-                        student -> student.getStudentClass().getId(),
-                        Collectors.counting()));
-
-        DashboardResponse.StudentsByStatus byStatus = new DashboardResponse.StudentsByStatus(
-                allStudents.stream().filter(s -> s.getStatus() == Student.Status.ACTIVE).count(),
-                allStudents.stream().filter(s -> s.getStatus() == Student.Status.SUSPENDED).count(),
-                allStudents.stream().filter(s -> s.getStatus() == Student.Status.TRANSFERRED).count());
-
-        List<DashboardResponse.ClassRow> classRows = allStudentClasses.stream()
-                .sorted(Comparator.comparing(StudentClass::getClassCode))
-                .limit(MAX_CLASS_ROWS)
-                .map(studentClass -> new DashboardResponse.ClassRow(
-                        String.valueOf(studentClass.getId()),
-                        studentClass.getClassName(),
-                        0,
-                        "",
-                        countByStudentClass.getOrDefault(studentClass.getId(), 0L).intValue(),
-                        0))
-                .toList();
-
-        List<DashboardResponse.RecentStudent> recent = allStudents.stream()
-                .sorted(Comparator.comparing(
-                        Student::getCreatedAt,
-                        Comparator.nullsLast(Comparator.reverseOrder())))
-                .limit(MAX_RECENT_STUDENTS)
-                .filter(s -> s.getStudentClass() != null)
-                .map(s -> new DashboardResponse.RecentStudent(
-                        String.valueOf(s.getId()),
-                        s.getStudentCode(),
-                        s.getFullName(),
-                        s.getStudentClass().getClassName(),
-                        Text.initials(s.getFullName(), "SV"),
-                        s.getCreatedAt() == null ? "" : s.getCreatedAt().toString()))
-                .toList();
-
-        return new DashboardResponse(
-                allStudents.size(),
-                (long) teachers.count(),
-                (long) allStudentClasses.stream()
-                        .map(s -> s.getMajor().getDepartment().getId())
-                        .distinct()
-                        .count(),
-                allStudentClasses.size(),
-                new DashboardResponse.ClassesByGrade(0, 0, 0),
-                byStatus,
-                classRows,
-                recent);
-    }
+ private final JdbcTemplate jdbc;
+ public DashboardService(JdbcTemplate jdbc){this.jdbc=jdbc;}
+ public DashboardResponse summary(Actor actor){
+  boolean admin=actor.isAdmin();
+  Long teacherId=actor.teacherId();
+  if(!admin&&teacherId==null) return empty();
+  String scope=admin?"":" AND EXISTS (SELECT 1 FROM enrollments e JOIN teaching_assignments ta ON ta.course_section_id=e.course_section_id WHERE e.student_id=s.id AND ta.teacher_id=?)";
+  Object[] args=admin?new Object[]{}:new Object[]{teacherId};
+  long total=jdbc.queryForObject("SELECT count(*) FROM students s WHERE s.student_class_id IS NOT NULL"+scope,Long.class,args);
+  long active=countStatus("ACTIVE",scope,args),suspended=countStatus("SUSPENDED",scope,args),transferred=countStatus("TRANSFERRED",scope,args);
+  Long teachers=admin?jdbc.queryForObject("SELECT count(*) FROM teachers",Long.class):null;
+  Long departments=admin?jdbc.queryForObject("SELECT count(*) FROM departments",Long.class):null;
+  String classScope=admin?"":" AND EXISTS (SELECT 1 FROM students s WHERE s.student_class_id=sc.id AND EXISTS (SELECT 1 FROM enrollments e JOIN teaching_assignments ta ON ta.course_section_id=e.course_section_id WHERE e.student_id=s.id AND ta.teacher_id=?))";
+  List<DashboardResponse.StudentClassRow> classes=jdbc.query("""
+   SELECT sc.id,sc.class_code,sc.class_name,m.name major_name,d.name department_name,sc.intake_year,
+    (SELECT count(*) FROM students s WHERE s.student_class_id=sc.id) student_count
+   FROM student_classes sc JOIN majors m ON m.id=sc.major_id JOIN departments d ON d.id=m.department_id
+   WHERE 1=1
+   """+classScope+" ORDER BY sc.intake_year DESC,sc.class_code LIMIT 10",
+   (rs,n)->new DashboardResponse.StudentClassRow(String.valueOf(rs.getLong("id")),rs.getString("class_code"),rs.getString("class_name"),rs.getString("major_name"),rs.getString("department_name"),rs.getInt("intake_year"),rs.getInt("student_count")),
+   admin?new Object[]{}:new Object[]{teacherId});
+  String recentScope=admin?"":" AND EXISTS (SELECT 1 FROM enrollments e JOIN teaching_assignments ta ON ta.course_section_id=e.course_section_id WHERE e.student_id=s.id AND ta.teacher_id=?)";
+  List<DashboardResponse.RecentStudent> recent=jdbc.query("""
+   SELECT s.id,s.student_code,s.full_name,sc.class_name,s.created_at
+   FROM students s LEFT JOIN student_classes sc ON sc.id=s.student_class_id
+   WHERE s.student_class_id IS NOT NULL
+   """+recentScope+" ORDER BY s.created_at DESC LIMIT 5",
+   (rs,n)->new DashboardResponse.RecentStudent(String.valueOf(rs.getLong("id")),rs.getString("student_code"),rs.getString("full_name"),rs.getString("class_name"),rs.getTimestamp("created_at")==null?"":rs.getTimestamp("created_at").toInstant().toString()),
+   admin?new Object[]{}:new Object[]{teacherId});
+  return new DashboardResponse(total,teachers,departments,classes.size(),new DashboardResponse.StudentsByStatus(active,suspended,transferred),classes,recent);
+ }
+ private long countStatus(String status,String scope,Object[] args){
+  String sql="SELECT count(*) FROM students s WHERE s.student_class_id IS NOT NULL AND s.status=?"+scope;
+  if(args.length==0)return jdbc.queryForObject(sql,Long.class,status);
+  return jdbc.queryForObject(sql,Long.class,status,args[0]);
+ }
+ private DashboardResponse empty(){return new DashboardResponse(0,null,null,0,new DashboardResponse.StudentsByStatus(0,0,0),List.of(),List.of());}
 }
